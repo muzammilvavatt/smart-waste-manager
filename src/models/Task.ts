@@ -14,6 +14,10 @@ export interface ITask {
     collectorId?: string;
     imageUrl?: string;
     proofImage?: string;
+    // Fraud prevention fields
+    imageHash?: string;         // SHA-256 hash of the report image for deduplication
+    isSuspicious?: boolean;     // AI flagged this as 'staged' waste
+    flaggedByCollector?: boolean; // Collector manually flagged this as fraudulent
     createdAt?: Date;
     updatedAt?: Date;
 }
@@ -69,6 +73,20 @@ const TaskSchema = new Schema<ITask>(
         },
         proofImage: {
             type: String,
+        },
+        // Fraud prevention fields
+        imageHash: {
+            type: String,
+            sparse: true, // Allow multiple null values but unique non-null hashes
+            unique: true,
+        },
+        isSuspicious: {
+            type: Boolean,
+            default: false,
+        },
+        flaggedByCollector: {
+            type: Boolean,
+            default: false,
         },
     },
     {

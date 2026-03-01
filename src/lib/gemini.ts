@@ -38,14 +38,20 @@ export async function classifyWaste(file: File): Promise<WasteVerificationResult
         // Convert image to format Gemini can process
         const imagePart = await fileToGenerativePart(file)
 
-        // Detailed prompt for waste classification
-        const prompt = `You are an expert waste classification system. Analyze this image and classify the waste type.
+        // Detailed prompt for waste classification with fraud/staging detection
+        const prompt = `You are an expert waste classification and fraud detection system. Analyze this image for BOTH waste type AND authenticity.
 
-IMPORTANT RULES:
-1. You are being used in a DEMO environment. Be extremely lenient.
-2. If the image shows ANY object that could possibly be waste (even a bottle, a paper, a bag, or a messy room), classify it as waste.
-3. ONLY respond with "non_waste" if the image is clearly a human face, a screenshot of text, or clearly not physical objects.
-4. If you are unsure, default to "general" or "plastic". Do NOT be strict.
+STEP 1 - FRAUD CHECK (check this FIRST):
+Look for signs of "staged" or "freshly dumped" waste — waste that was deliberately placed:
+- A single neatly-tied bag or item placed in an otherwise spotless, clean environment
+- Waste that looks brand new or unweathered (not dirty, not wet, not sun-faded)
+- An obvious mismatch between the neatness of waste and the surroundings
+If you detect STAGED waste, set the message to start with "⚠️ SUSPICIOUS:" and describe why.
+
+STEP 2 - WASTE CLASSIFICATION:
+2. If the image shows ANY object that could possibly be waste (bottle, paper, bag, messy area), classify it.
+3. ONLY respond with "non_waste" if the image is clearly a human face, a screenshot, or has no physical waste items.
+4. If unsure, default to "general". Do NOT be overly strict.
 
 CATEGORIES:
 - organic: Food waste, fruit peels, vegetable scraps, garden waste
@@ -54,17 +60,18 @@ CATEGORIES:
 - paper: Cardboard, newspapers, paper packaging
 - hazardous: Batteries, chemicals, medical waste, electronic waste
 - general: Any mixed waste or "unsure" items. Default to this if unclear.
+- non_waste: Clearly not waste (faces, screenshots, blank walls)
 
 Respond in this EXACT JSON format:
 {
   "category": "one of: organic|plastic|metal|paper|hazardous|general|non_waste",
   "confidence": 0.0-1.0,
-  "message": "Brief disposal instruction or reason for rejection"
+  "message": "Start with ⚠️ SUSPICIOUS: if staged, otherwise give disposal instructions"
 }
 
 Examples:
-- Plastic bottle: {"category": "plastic", "confidence": 0.95, "message": "Plastic waste detected. Please use the Yellow Bin for recycling."}
-- Banana peel: {"category": "organic", "confidence": 0.98, "message": "Organic waste detected. Please use the Green Bin for composting."}
+- Natural trash pile: {"category": "plastic", "confidence": 0.95, "message": "Mixed plastic waste detected. Use the Yellow Bin for recycling."}
+- Single clean bag on spotless floor: {"category": "plastic", "confidence": 0.7, "message": "⚠️ SUSPICIOUS: Waste appears freshly placed in an otherwise clean environment. Possible staging."}
 - Person in photo: {"category": "non_waste", "confidence": 0.1, "message": "This does not appear to be waste. Please upload a clear photo of waste items."}
 
 Analyze the image now:`
@@ -179,5 +186,51 @@ export async function verifyCollection(reportImageUrl: string, proofFile: File):
             confidence: 0.5,
             message: 'Manual verification may be required due to system error.'
         }
+    }
+}
+
+// AI-powered Admin Dashboard Insight
+export async function generateAdminSummary(stats: any): Promise<string> {
+    try {
+        const genAI = getGeminiClient()
+        // Use gemini-2.5-flash for fast text generation
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" })
+
+        // Simplify the stats object to pass to the prompt
+        const statsSummary = JSON.stringify({
+            totalUsers: stats.totalUsers,
+            totalCollections: stats.totalCollections,
+            pendingTasks: stats.pendingTasks,
+            activeCollectors: stats.activeCollectors,
+            topWasteType: stats.wasteTypeStats?.sort((a: any, b: any) => b.value - a.value)[0]?.name || 'Unknown',
+            recentTrend: stats.weeklyStats?.slice(-2) // Last 2 days to compare
+        });
+
+        const prompt = `You are an expert City Waste Management Analyst.
+        I am providing you with the real-time statistics of our Smart Waste Management system.
+        
+        CURRENT STATS:
+        ${statsSummary}
+        
+        YOUR TASK:
+        Write a concise, 2-3 sentence strategic summary for the City Administrator.
+        
+        GUIDELINES:
+        - Keep it brief, professional, and actionable.
+        - Highlight the most pressing issue (e.g., high pending tasks vs low collectors).
+        - Mention the most common waste type if relevant.
+        - Do NOT use bullet points or markdown. Just plain text.
+        
+        Example: "We currently have 45 pending tasks but only 2 active collectors, indicating a severe bottleneck in operations. Plastic remains the dominant waste type. Consider onboarding more collectors in the affected zones immediately."
+        
+        Write the summary now:`
+
+        const result = await model.generateContent(prompt)
+        const response = await result.response
+        return response.text().trim()
+
+    } catch (error: any) {
+        console.error("Gemini summary error:", error)
+        return "System insights are currently unavailable due to high AI demand or network error."
     }
 }

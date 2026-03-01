@@ -28,13 +28,27 @@ export const authConfig = {
                 session.user.id = token.sub;
                 session.user.role = token.role;
                 session.user.points = token.points;
+                session.user.profileImage = token.profileImage;
             }
             return session;
         },
-        async jwt({ token, user }: any) {
+        async jwt({ token, user, trigger, session }: any) {
             if (user) {
                 token.role = user.role;
                 token.points = user.points;
+                // Prevent large base64 strings from breaking the JWT cookie limit
+                if (user.profileImage && user.profileImage.length < 500) {
+                     token.profileImage = user.profileImage;
+                } else if (!user.profileImage) {
+                     token.profileImage = "";
+                }
+            }
+            if (trigger === "update" && session) {
+                if (session.name !== undefined) token.name = session.name;
+                if (session.email !== undefined) token.email = session.email;
+                if (session.profileImage !== undefined && session.profileImage.length < 500) {
+                     token.profileImage = session.profileImage;
+                }
             }
             return token;
         },

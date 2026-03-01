@@ -2,9 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 import bcrypt from 'bcryptjs';
+import { auth } from '@/auth';
 
 export async function POST(request: NextRequest) {
     try {
+        const session = await auth();
+        if (!session || !session.user || session.user.role !== 'admin') {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
         await connectDB();
 
         const { email, name, role, password } = await request.json();

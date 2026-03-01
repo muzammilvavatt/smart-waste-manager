@@ -11,7 +11,6 @@ const delay = (ms: number) => Promise.resolve();
  * @returns User object if found, null otherwise
  */
 export async function loginUser(email: string, password?: string): Promise<User | null> {
-    await delay(300);
     try {
         const response = await fetch('/api/auth/login', {
             method: 'POST',
@@ -40,7 +39,6 @@ export async function loginUser(email: string, password?: string): Promise<User 
  * @param role - Role (ignored by backend, kept for compatibility interface)
  */
 export async function createUser(email: string, name: string, role: User['role'], password?: string): Promise<User> {
-    await delay(300);
     try {
         const response = await fetch('/api/auth/register', {
             method: 'POST',
@@ -68,7 +66,6 @@ export async function createUser(email: string, name: string, role: User['role']
  * @param password - User password
  */
 export async function createAdminUser(email: string, name: string, role: User['role'], password?: string): Promise<User> {
-    await delay(300);
     try {
         const response = await fetch('/api/admin/users', {
             method: 'POST',
@@ -94,7 +91,6 @@ export async function createAdminUser(email: string, name: string, role: User['r
  * @param userId - Optional ID to filter tasks specific to a user
  */
 export async function getTasks(role: User['role'], userId?: string): Promise<CollectionTask[]> {
-    await delay(300);
     try {
         const params = new URLSearchParams();
         if (role) params.append('role', role);
@@ -119,7 +115,6 @@ export async function updateTaskStatus(
     collectorId?: string,
     proofImage?: string
 ): Promise<CollectionTask> {
-    await delay(300);
     try {
         const response = await fetch(`/api/tasks/${taskId}`, {
             method: 'PATCH',
@@ -146,9 +141,10 @@ export async function createTask(
     location: string,
     coordinates: { lat: number; lng: number } | undefined,
     citizenId: string,
-    imageUrl?: string
+    imageUrl?: string,
+    imageHash?: string,
+    isSuspicious?: boolean,
 ): Promise<CollectionTask> {
-    await delay(300);
     try {
         const response = await fetch('/api/tasks', {
             method: 'POST',
@@ -160,11 +156,14 @@ export async function createTask(
                 coordinates,
                 citizenId,
                 imageUrl,
+                imageHash,
+                isSuspicious: isSuspicious ?? false,
             }),
         });
 
         if (!response.ok) {
-            throw new Error('Failed to create task');
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to create task');
         }
 
         return await response.json();
@@ -175,7 +174,6 @@ export async function createTask(
 }
 
 export async function getAllUsers(): Promise<User[]> {
-    await delay(300);
     try {
         const response = await fetch('/api/users');
 
@@ -191,7 +189,6 @@ export async function getAllUsers(): Promise<User[]> {
 }
 
 export async function deleteUser(userId: string): Promise<void> {
-    await delay(300);
     try {
         const response = await fetch(`/api/users?id=${userId}`, {
             method: 'DELETE',
@@ -208,18 +205,44 @@ export async function deleteUser(userId: string): Promise<void> {
 
 export async function updateUser(
     userId: string,
-    updates: { role?: User['role']; points?: number; name?: string; email?: string; password?: string }
+    updates: { role?: User['role']; points?: number; name?: string; email?: string; password?: string; profileImage?: string }
 ): Promise<User> {
-    await delay(300);
     try {
-        const response = await fetch('/api/users', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: userId, ...updates }),
-        });
+        let response;
+
+        // If there's a profileImage (which could be a hefty base64 string), send as FormData
+        if (updates.profileImage !== undefined) {
+            const formData = new FormData();
+            formData.append("id", userId);
+            if (updates.role) formData.append("role", updates.role);
+            if (updates.points !== undefined) formData.append("points", updates.points.toString());
+            if (updates.name) formData.append("name", updates.name);
+            if (updates.email) formData.append("email", updates.email);
+            if (updates.password) formData.append("password", updates.password);
+
+            // Handle explicit removal vs upload
+            if (updates.profileImage === "") {
+                formData.append("profileImage", "null"); // Signal removal
+            } else {
+                formData.append("profileImage", updates.profileImage);
+            }
+
+            response = await fetch('/api/users', {
+                method: 'PATCH',
+                body: formData,
+            });
+        } else {
+            // Standard JSON payload for minor text updates
+            response = await fetch('/api/users', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: userId, ...updates }),
+            });
+        }
 
         if (!response.ok) {
-            throw new Error('Failed to update user');
+            const errText = await response.text();
+            throw new Error(`Failed to update user: ${errText}`);
         }
 
         return await response.json();

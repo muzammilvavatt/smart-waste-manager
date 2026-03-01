@@ -5,9 +5,8 @@ import { useState, useEffect } from "react"
 import { useAuth } from "@/contexts/auth-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Logo } from "@/components/shared/logo"
 import toast from "react-hot-toast"
-import { Loader2 } from "lucide-react"
+import { Loader2, Mail, Lock, ShieldAlert } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -47,7 +46,7 @@ export default function LoginPage() {
 
     if (!isInitialized || user) {
         return (
-            <div className="flex justify-center items-center min-h-[400px]">
+            <div className="flex justify-center items-center h-full min-h-[400px]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         )
@@ -66,68 +65,103 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="grid gap-6">
-            <div className="text-center">
-                <h1 className="text-3xl font-bold">Sign In</h1>
-                <p className="text-balance text-muted-foreground">
-                    Enter your email below to login to your account
+        <div className="flex flex-col gap-6 w-full max-w-[420px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="flex flex-col space-y-2 text-center mb-4 sm:mb-6">
+                <h1 className="text-3xl font-bold tracking-tight text-foreground">
+                    Welcome back
+                </h1>
+                <p className="text-muted-foreground text-sm">
+                    Enter your credentials to access your account
                 </p>
             </div>
 
-            <form className="grid gap-4" onSubmit={handleSubmit(onSubmit)}>
-                {globalError && (
-                    <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
-                        {globalError}
-                    </div>
-                )}
+            <div className="bg-card border border-border/40 rounded-[2rem] p-6 sm:p-8 w-full relative overflow-hidden shadow-sm">
 
-                <div className="grid gap-2">
-                    <label htmlFor="email">Email</label>
-                    <Input
-                        id="email"
-                        type="email"
-                        placeholder="m@example.com"
-                        required
-                        className={errors.email ? "border-red-500" : ""}
-                        {...register("email")}
-                    />
-                    {errors.email && (
-                        <p className="text-xs text-red-500">{errors.email.message}</p>
+
+                <form className="flex flex-col gap-5 sm:gap-6" onSubmit={handleSubmit(onSubmit)}>
+                    {globalError && (
+                        <div className="rounded-xl bg-destructive/10 p-4 text-sm text-destructive font-medium border border-destructive/20 flex items-start gap-3">
+                            <ShieldAlert className="w-5 h-5 shrink-0" />
+                            <p>{globalError}</p>
+                        </div>
                     )}
-                </div>
 
-                <div className="grid gap-2">
-                    <div className="flex items-center">
-                        <label htmlFor="password">Password</label>
-                        <Link
-                            href="/forgot-password"
-                            className="ml-auto inline-block text-sm underline"
-                        >
-                            Forgot your password?
-                        </Link>
+                    <div className="flex flex-col gap-2">
+                        <label htmlFor="email" className="text-sm font-semibold text-foreground/90">
+                            Email Address
+                        </label>
+                        <div className="relative">
+                            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground/70" />
+                            <Input
+                                id="email"
+                                type="email"
+                                placeholder="name@example.com"
+                                required
+                                className={`h-12 pl-11 rounded-xl bg-background/50 border-border/50 transition-all ${errors.email ? "border-destructive/50 focus-visible:ring-destructive/30" : "focus-visible:border-primary/50 focus-visible:ring-primary/20"
+                                    }`}
+                                {...register("email")}
+                            />
+                        </div>
+                        {errors.email && (
+                            <p className="text-xs text-destructive font-medium mt-1">{errors.email.message}</p>
+                        )}
                     </div>
-                    <Input
-                        id="password"
-                        type="password"
-                        required
-                        className={errors.password ? "border-red-500" : ""}
-                        {...register("password")}
-                    />
-                    {errors.password && (
-                        <p className="text-xs text-red-500">{errors.password.message}</p>
-                    )}
-                </div>
 
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? "Signing in..." : "Login"}
-                </Button>
-            </form>
+                    <div className="flex flex-col gap-2">
+                        <div className="flex items-center justify-between">
+                            <label htmlFor="password" className="text-sm font-semibold text-foreground/90">
+                                Password
+                            </label>
+                            <Link
+                                href="/forgot-password"
+                                className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                            >
+                                Forgot password?
+                            </Link>
+                        </div>
+                        <div className="relative">
+                            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground/70" />
+                            <Input
+                                id="password"
+                                type="password"
+                                placeholder="••••••••"
+                                required
+                                className={`h-12 pl-11 rounded-xl bg-background/50 border-border/50 transition-all ${errors.password ? "border-destructive/50 focus-visible:ring-destructive/30" : "focus-visible:border-primary/50 focus-visible:ring-primary/20"
+                                    }`}
+                                {...register("password")}
+                            />
+                        </div>
+                        {errors.password && (
+                            <p className="text-xs text-destructive font-medium mt-1">{errors.password.message}</p>
+                        )}
+                    </div>
 
-            <div className="mt-4 text-center text-sm">
-                Don&apos;t have an account?{" "}
-                <Link href="/register" className="underline">
-                    Sign up
-                </Link>
+                    <Button
+                        type="submit"
+                        size="lg"
+                        className="w-full h-12 rounded-xl font-semibold mt-4"
+                        disabled={isLoading}
+                    >
+                        {isLoading ? (
+                            <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                        ) : null}
+                        <span className="flex items-center justify-center gap-2">
+                            {isLoading ? "Signing in..." : "Sign in to account"}
+                        </span>
+                    </Button>
+                </form>
+            </div>
+
+            <div className="text-center mt-2">
+                <p className="text-sm font-medium text-muted-foreground">
+                    Don&apos;t have an account?{" "}
+                    <Link
+                        href="/register"
+                        className="text-primary hover:text-primary/80 font-semibold underline-offset-4 hover:underline transition-colors"
+                    >
+                        Create an account
+                    </Link>
+                </p>
             </div>
         </div>
     )

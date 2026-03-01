@@ -29,15 +29,15 @@ export default function WasteCategoryChart({ data }: WasteCategoryChartProps) {
         <div className="flex flex-col md:flex-row items-center justify-between h-full py-4">
             {data.length > 0 ? (
                 <>
-                    <div className="w-full md:w-1/2 h-[300px]">
+                    <div className="w-full md:w-1/2 h-[220px] md:h-[300px]">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
                                     data={data}
                                     cx="50%"
                                     cy="50%"
-                                    innerRadius={60}
-                                    outerRadius={100}
+                                    innerRadius="60%"
+                                    outerRadius="80%"
                                     fill="#8884d8"
                                     paddingAngle={5}
                                     dataKey="value"

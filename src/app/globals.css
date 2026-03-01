@@ -58,79 +58,84 @@
 }
 
 :root {
-  /* Light Mode - Eco Neutral */
-  --background: 140 10% 96%;
-  /* #F4F7F5 */
-  --foreground: 164 45% 10%;
-  /* Dark Green/Charcoal */
+  /* Modern SaaS Light Mode */
+  --background: 0 0% 100%;
+  /* Pure White */
+  --foreground: 240 10% 3.9%;
+  /* Zinc 950 */
 
   --card: 0 0% 100%;
-  --card-foreground: 164 45% 10%;
+  --card-foreground: 240 10% 3.9%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 164 45% 10%;
+  --popover-foreground: 240 10% 3.9%;
 
-  /* Deep Emerald Gradient Support - Base Colors */
-  --primary: 158 55% 30%;
-  /* Deep Emerald */
-  --primary-foreground: 150 20% 98%;
+  --primary: 160 81% 36%;
+  /* Vibrant Emerald for "Waste Manager" vibe */
+  --primary-foreground: 0 0% 100%;
+  /* White text on primary */
 
-  --secondary: 165 30% 92%;
-  /* Muted Tea/Forest */
-  --secondary-foreground: 158 55% 25%;
+  --secondary: 240 4.8% 95.9%;
+  /* Zinc 100 */
+  --secondary-foreground: 240 5.9% 10%;
+  /* Zinc 900 */
 
-  --muted: 150 10% 94%;
-  --muted-foreground: 160 15% 45%;
+  --muted: 240 4.8% 95.9%;
+  --muted-foreground: 240 3.8% 46.1%;
+  /* Zinc 500 */
 
-  --accent: 180 100% 45%;
-  /* Electric Cyan */
-  --accent-foreground: 180 100% 10%;
+  --accent: 240 4.8% 95.9%;
+  --accent-foreground: 240 5.9% 10%;
 
   --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 210 40% 98%;
+  /* Crisp red */
+  --destructive-foreground: 0 0% 100%;
 
-  --border: 160 15% 90%;
-  --input: 160 15% 90%;
-  --ring: 158 55% 30%;
+  --border: 240 5.9% 90%;
+  /* Zinc 200 */
+  --input: 240 5.9% 90%;
+  --ring: 160 81% 36%;
+  /* Match primary */
 
-  --radius: 1rem;
-  /* 16px rounded corners */
+  --radius: 0.75rem;
+  /* 12px for modern sleek feel */
 }
 
 .dark {
-  /* Classic Dark Mode - Hierarchy & Contrast */
-  --background: 222 47% 6%;
-  /* #020617 - Slate 950 */
-  --foreground: 210 40% 98%;
-  /* #f8fafc - Slate 50 */
+  /* Modern SaaS Dark Mode */
+  --background: 240 10% 3.9%;
+  /* Zinc 950 */
+  --foreground: 0 0% 98%;
+  /* Zinc 50 */
 
-  --card: 222 47% 11%;
-  /* #0f172a - Slate 900 */
-  --card-foreground: 210 40% 98%;
+  --card: 240 10% 3.9%;
+  --card-foreground: 0 0% 98%;
 
-  --popover: 222 47% 11%;
-  --popover-foreground: 210 40% 98%;
+  --popover: 240 10% 3.9%;
+  --popover-foreground: 0 0% 98%;
 
-  --primary: 158 60% 45%;
-  /* Emerald */
-  --primary-foreground: 144.9 80.4% 10%;
+  --primary: 158 64% 52%;
+  /* Slightly brighter emerald for dark mode */
+  --primary-foreground: 0 0% 98%;
 
-  --secondary: 215 27.9% 16.9%;
-  /* Slate 800 */
-  --secondary-foreground: 210 40% 98%;
+  --secondary: 240 3.7% 15.9%;
+  /* Zinc 800 */
+  --secondary-foreground: 0 0% 98%;
 
-  --muted: 215 27.9% 16.9%;
-  --muted-foreground: 215 20.2% 65.1%;
+  --muted: 240 3.7% 15.9%;
+  --muted-foreground: 240 5% 64.9%;
+  /* Zinc 400 */
 
-  --accent: 215 27.9% 16.9%;
-  --accent-foreground: 210 40% 98%;
+  --accent: 240 3.7% 15.9%;
+  --accent-foreground: 0 0% 98%;
 
   --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 210 40% 98%;
+  /* Darker red */
+  --destructive-foreground: 0 0% 98%;
 
-  --border: 215 27.9% 16.9%;
-  --input: 215 27.9% 16.9%;
-  --ring: 158 60% 45%;
+  --border: 240 3.7% 15.9%;
+  --input: 240 3.7% 15.9%;
+  --ring: 158 64% 52%;
 }
 
 @layer base {
@@ -139,8 +144,10 @@
   }
 
   body {
-    @apply bg-background text-foreground tracking-tight scroll-smooth overflow-x-hidden;
+    @apply bg-background text-foreground scroll-smooth overflow-x-hidden;
     font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   h1,
@@ -149,31 +156,31 @@
   h4,
   h5,
   h6 {
-    @apply font-heading tracking-tight;
+    @apply font-heading tracking-tight text-foreground;
   }
 }
 
 @layer utilities {
   .glass {
-    @apply bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-lg;
+    @apply bg-background/60 backdrop-blur-xl border border-white/10 shadow-sm dark:bg-zinc-950/60 dark:border-white/5;
   }
 
   .glass-card {
-    @apply bg-white/80 dark:bg-slate-800/50 backdrop-blur-md border border-white/40 dark:border-white/5 shadow-sm hover:shadow-md transition-all duration-300;
+    @apply bg-white/70 dark:bg-zinc-900/50 backdrop-blur-lg border border-black/5 dark:border-white/10 shadow-lg hover:shadow-xl transition-all duration-300;
   }
 
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-teal-500 dark:from-emerald-400 dark:to-teal-300;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-teal-400 dark:from-emerald-400 dark:to-teal-200;
   }
-  
+
   .animate-blob {
-    animation: blob 7s infinite;
+    animation: blob 8s infinite ease-in-out alternate;
   }
-  
+
   .animation-delay-2000 {
     animation-delay: 2s;
   }
-  
+
   .animation-delay-4000 {
     animation-delay: 4s;
   }
@@ -181,16 +188,19 @@
 
 @keyframes blob {
   0% {
-    transform: translate(0px, 0px) scale(1);
+    transform: translate(0px, 0px) scale(1.0);
   }
+
   33% {
-    transform: translate(30px, -50px) scale(1.1);
+    transform: translate(25px, -35px) scale(1.05);
   }
+
   66% {
-    transform: translate(-20px, 20px) scale(0.9);
+    transform: translate(-15px, 20px) scale(0.95);
   }
+
   100% {
-    transform: translate(0px, 0px) scale(1);
+    transform: translate(0px, 0px) scale(1.0);
   }
 }
 

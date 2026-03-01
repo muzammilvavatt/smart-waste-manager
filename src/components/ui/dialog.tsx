@@ -15,7 +15,7 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
     return (
         <AnimatePresence>
             {open && (
-                <div className="relative z-[9999]">
+                <div className="relative z-50">
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}

@@ -10,7 +10,7 @@ export async function GET() {
         const topUsers = await User.find({ role: 'citizen' })
             .sort({ points: -1 })
             .limit(10)
-            .select('name points');
+            .select('name points profileImage');
 
         return NextResponse.json(topUsers);
     } catch (error) {

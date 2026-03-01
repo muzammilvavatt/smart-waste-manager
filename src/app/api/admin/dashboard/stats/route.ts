@@ -2,9 +2,15 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 import Task from '@/models/Task';
+import { auth } from '@/auth';
 
 export async function GET(request: Request) {
     try {
+        const session = await auth();
+        if (!session || !session.user || session.user.role !== 'admin') {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
         const { searchParams } = new URL(request.url);
         const range = searchParams.get('range') || '7d';
 
@@ -55,39 +61,51 @@ export async function GET(request: Request) {
         const activeCollectors = await User.countDocuments({ role: 'collector' });
 
         // 2. Weekly/Daily Collection Overview
-        // If range is 7d, show 7 days. If 30d, show 30 days. If all, show last 30 days.
-        const chartDays = range === '30d' ? 30 : 7;
+        const matchStage: any = {
+            status: { $in: ['collected', 'verified'] }
+        };
 
-        const chartStartDate = new Date();
-        chartStartDate.setDate(chartStartDate.getDate() - chartDays);
-        const chartStartDateStr = chartStartDate.toISOString().split('T')[0];
+        if (range !== 'all') {
+            const days = range === '30d' ? 30 : 7;
+            const d = new Date();
+            d.setDate(d.getDate() - days);
+            matchStage.date = { $gte: d.toISOString().split('T')[0] };
+        }
 
         const weeklyStatsRaw = await Task.aggregate([
-            {
-                $match: {
-                    status: { $in: ['collected', 'verified'] },
-                    date: { $gte: chartStartDateStr }
-                }
-            },
-            {
-                $group: {
-                    _id: "$date",
-                    count: { $sum: 1 }
-                }
-            },
+            { $match: matchStage },
+            { $group: { _id: "$date", count: { $sum: 1 } } },
             { $sort: { _id: 1 } }
         ]);
+
+        let chartDays = 7;
+        if (range === '30d') {
+            chartDays = 30;
+        } else if (range === 'all') {
+            if (weeklyStatsRaw.length > 0) {
+                const earliestDate = new Date(weeklyStatsRaw[0]._id);
+                const diffTime = new Date().getTime() - earliestDate.getTime();
+                chartDays = Math.max(7, Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1);
+            } else {
+                chartDays = 7;
+            }
+        }
 
         const weeklyStats = [];
         for (let i = chartDays - 1; i >= 0; i--) {
             const d = new Date();
             d.setDate(d.getDate() - i);
             const dateStr = d.toISOString().split('T')[0];
-            const dayName = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
+            const dayName = d.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                ...(range === 'all' && chartDays > 365 ? { year: '2-digit' } : {})
+            });
 
             const found = weeklyStatsRaw.find(item => item._id === dateStr);
             weeklyStats.push({
-                name: dayName, // Short format
+                name: dayName,
                 date: dateStr,
                 waste: found ? found.count : 0
             });

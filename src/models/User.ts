@@ -6,6 +6,7 @@ export interface IUser {
     role: 'citizen' | 'collector' | 'admin';
     points?: number;
     password?: string;
+    profileImage?: string;
     createdAt?: Date;
     updatedAt?: Date;
 }
@@ -38,6 +39,9 @@ const UserSchema = new Schema<IUser>(
             type: String,
             required: [true, 'Password is required'],
             select: false, // Don't return password by default
+        },
+        profileImage: {
+            type: String,
         },
     },
     {

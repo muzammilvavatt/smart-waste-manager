@@ -6,7 +6,7 @@ export interface User {
     name: string;
     role: UserRole;
     points?: number; // Only for citizens
-    avatar?: string;
+    profileImage?: string;
 }
 
 export interface WasteVerificationResult {
@@ -27,6 +27,8 @@ export interface CollectionTask {
     citizenId: string;
     imageUrl?: string;
     proofImage?: string; // photo by collector
+    isSuspicious?: boolean; // AI flagged this report as staged/suspicious
+    flaggedByCollector?: boolean; // Collector manually flagged as fraud
     verificationResult?: {
         status: 'verified' | 'rejected';
         message: string;

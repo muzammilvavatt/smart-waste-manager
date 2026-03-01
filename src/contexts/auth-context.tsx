@@ -13,7 +13,7 @@ interface AuthContextType {
     login: (email: string, password?: string) => Promise<void>
     register: (email: string, name: string, role: UserRole, password?: string) => Promise<void>
     logout: () => void
-    refetchUser: () => Promise<void>
+    refetchUser: (data?: any) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -23,7 +23,7 @@ const AuthContext = createContext<AuthContextType>({
     login: async () => { },
     register: async () => { },
     logout: () => { },
-    refetchUser: async () => { },
+    refetchUser: async (data?: any) => { },
 })
 
 export function useAuth() {
@@ -49,7 +49,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 name: session.user.name || "",
                 email: session.user.email || "",
                 role: (session.user as any).role || "citizen",
-                points: (session.user as any).points || 0
+                points: (session.user as any).points || 0,
+                profileImage: (session.user as any).profileImage || undefined
             })
         } else {
             setUser(null)
@@ -91,8 +92,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         await signOut({ redirect: true, callbackUrl: "/" })
     }
 
-    const refetchUser = async () => {
-        await update()
+    const refetchUser = async (data?: any) => {
+        await update(data)
     }
 
     return (

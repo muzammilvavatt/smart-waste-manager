@@ -3,11 +3,15 @@
 import * as React from "react"
 import { Moon, Sun } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
 
-export function ThemeToggle() {
+export function ThemeToggle({ variant = "button" }: { variant?: "button" | "switch" }) {
     const [theme, setTheme] = React.useState<"light" | "dark">("light")
+    const [mounted, setMounted] = React.useState(false)
 
     React.useEffect(() => {
+        setMounted(true)
         const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null
         if (savedTheme) {
             setTheme(savedTheme)
@@ -23,6 +27,30 @@ export function ThemeToggle() {
         setTheme(newTheme)
         localStorage.setItem("theme", newTheme)
         document.documentElement.classList.toggle("dark", newTheme === "dark")
+    }
+
+    if (!mounted) {
+        return variant === "button" ? (
+            <Button variant="ghost" size="icon" title="Toggle Theme" disabled>
+                <Sun className="h-[1.2rem] w-[1.2rem]" />
+            </Button>
+        ) : (
+            <div className="flex items-center space-x-2">
+                <Switch disabled checked={false} />
+            </div>
+        )
+    }
+
+    if (variant === "switch") {
+        return (
+            <div className="flex items-center space-x-2">
+                <Switch
+                    checked={theme === "dark"}
+                    onCheckedChange={() => toggleTheme()}
+                    aria-label="Toggle Dark Mode"
+                />
+            </div>
+        )
     }
 
     return (

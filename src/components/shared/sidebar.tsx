@@ -17,6 +17,7 @@ import {
 } from "lucide-react"
 import { motion } from "framer-motion"
 import { Logo } from "./logo"
+import { UserAvatar } from "./user-avatar"
 
 import { ThemeToggle } from "./theme-toggle"
 
@@ -93,9 +94,12 @@ export function Sidebar() {
                 </div>
                 <div className="mt-auto border-t p-4">
                     <div className="flex items-center gap-3 px-3 py-2">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
-                            {user.name.charAt(0)}
-                        </div>
+                        <UserAvatar
+                            avatarId={user.profileImage}
+                            fallbackName={user.name}
+                            className="h-9 w-9 border border-border/50"
+                            iconClassName="h-4 w-4"
+                        />
                         <div className="flex-1 overflow-hidden">
                             <p className="truncate text-sm font-medium text-gray-900 dark:text-gray-50">{user.name}</p>
                             <p className="truncate text-xs text-gray-500 dark:text-gray-400 capitalize">{user.role}</p>

@@ -31,7 +31,8 @@ const nextAuthResult = NextAuth({
                             name: user.name,
                             email: user.email,
                             role: user.role,
-                            points: user.points
+                            points: user.points,
+                            profileImage: user.profileImage
                         };
                     }
                 }

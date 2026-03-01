@@ -3,14 +3,18 @@ import connectDB from '@/lib/mongodb';
 import Task from '@/models/Task';
 import User from '@/models/User';
 import { WASTE_POINTS, WasteCategory } from '@/lib/constants';
-
-
+import { auth } from '@/auth';
 
 export async function PATCH(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const session = await auth();
+        if (!session || !session.user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
         await connectDB();
 
         const { id } = await params;
@@ -36,6 +40,19 @@ export async function PATCH(
         }
 
         const previousStatus = task.status;
+
+        // ─── FRAUD PREVENTION 3: Self-Collection Block ─────────────────────────
+        // A citizen cannot be the one to 'collect' their own reported task.
+        // This prevents a single user with two roles from self-approving work.
+        if (status === 'collected' || status === 'completed') {
+            if (task.citizenId === session.user.id) {
+                console.warn(`[FRAUD] Self-collection attempt by citizen ${session.user.id} on task ${task._id}`);
+                return NextResponse.json(
+                    { error: 'You cannot collect waste from your own report.' },
+                    { status: 403 }
+                );
+            }
+        }
 
         // Update task
 
@@ -75,6 +92,7 @@ export async function PATCH(
             collectorId: task.collectorId,
             imageUrl: task.imageUrl,
             proofImage: task.proofImage,
+            isSuspicious: task.isSuspicious || false,
         });
     } catch (error) {
         console.error('Update task error:', error);

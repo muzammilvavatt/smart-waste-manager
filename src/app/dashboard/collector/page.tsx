@@ -4,16 +4,18 @@ import { useState } from "react"
 import { useAuth } from "@/contexts/auth-context"
 import { useCollectionTasks } from "@/hooks/use-collection-tasks"
 import { CollectionTask } from "@/types"
-import { StatsCard } from "@/components/collector/stats-card"
+import { Button } from "@/components/ui/button"
+import { KpiCard } from "@/components/dashboard/kpi-card"
 import { TaskCard } from "@/components/collector/task-card"
 import { TaskFilters } from "@/components/collector/task-filters"
 import { VerificationModal } from "@/components/collector/verification-modal"
-import { CheckCircle, Clock, TrendingUp, Loader2, Search } from "lucide-react"
+import { CheckCircle, Clock, TrendingUp, Loader2, Search, LogOut, RefreshCw } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
+import { UserAvatar } from "@/components/shared/user-avatar"
 import toast from "react-hot-toast"
 
 export default function CollectorDashboard() {
-    const { user } = useAuth()
+    const { user, logout } = useAuth()
     const {
         tasks,
         loading,
@@ -38,10 +40,6 @@ export default function CollectorDashboard() {
 
     const handleVerifyCollection = async (task: CollectionTask, file: File): Promise<boolean> => {
         try {
-            // Convert file to base64 for API/Storage if needed, but for Gemini we use File object locally
-            // In a real app we'd upload to cloud storage first.
-            // Here we just use the local file for the verify call.
-
             const reader = new FileReader();
             const imageBase64 = await new Promise<string>((resolve) => {
                 reader.onload = () => resolve(reader.result as string);
@@ -50,9 +48,6 @@ export default function CollectorDashboard() {
 
             // Call AI verification
             const { verifyCollection } = await import("@/lib/gemini");
-            // Note: verifyCollection expects (imageUrl, imageFile). 
-            // We are verifying the *new* image against the *original task* image? 
-            // Or just analyzing the new image? The previous code passed (task.imageUrl, file).
             const result = await verifyCollection(task.imageUrl || "", file);
 
             if (result.category === 'rejected' && result.confidence > 0.7) {
@@ -60,76 +55,131 @@ export default function CollectorDashboard() {
                 return false;
             }
 
-            await updateTaskStatus(task.id, 'collected', imageBase64); // passing base64 as proof for now
+            await updateTaskStatus(task.id, 'collected', imageBase64);
             toast.success("Collection verified and completed!");
             refreshTasks();
             return true;
         } catch (error) {
             console.error("Verification failed", error);
-            // Don't throw the error back to the UI which causes Next.js overlays
             return false;
         }
     }
 
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        show: {
+            opacity: 1,
+            transition: { staggerChildren: 0.1 }
+        }
+    }
+
+    const itemVariants = {
+        hidden: { opacity: 0, y: 10 },
+        show: { opacity: 1, y: 0 }
+    }
+
     return (
-        <div className="space-y-6 pb-20">
-            <div className="flex flex-col gap-2">
-                <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-50">Collector Dashboard</h1>
-                <p className="text-gray-500 dark:text-gray-400">Manage your collection tasks efficiently.</p>
+        <motion.div
+            className="space-y-8 pb-20 max-w-7xl mx-auto"
+            initial="hidden"
+            animate="show"
+            variants={containerVariants}
+        >
+            {/* App-like Header for Mobile */}
+            <div className="md:hidden flex items-center justify-between pb-4">
+                <div className="flex items-center gap-3">
+                    <UserAvatar
+                        avatarId={user?.profileImage}
+                        fallbackName={user?.name || "U"}
+                        className="h-11 w-11 rounded-[1rem] shadow-sm border border-emerald-500/20"
+                        iconClassName="h-5 w-5"
+                    />
+                    <div>
+                        <p className="text-[12px] font-semibold text-muted-foreground tracking-tight uppercase">
+                            Collector Hub
+                        </p>
+                        <h1 className="text-xl font-bold tracking-tight text-foreground leading-tight">{user?.name}</h1>
+                    </div>
+                </div>
+                <Button variant="ghost" size="icon" onClick={() => logout()} className="text-muted-foreground bg-muted/30 rounded-full h-9 w-9">
+                    <LogOut className="h-4 w-4 text-red-500" />
+                </Button>
+            </div>
+
+            <div className="hidden md:flex flex-col gap-1.5 pb-2 border-b border-border/40">
+                <h1 className="text-3xl font-bold tracking-tight text-foreground">Collector Hub</h1>
+                <p className="text-muted-foreground text-sm font-medium">Manage your routes and verify collections.</p>
             </div>
 
             {/* Stats Overview */}
-            <div className="grid gap-4 md:grid-cols-3">
-                <StatsCard
-                    title="Total Collections"
-                    value={stats.totalCollections}
-                    icon={CheckCircle}
-                    description="Lifetime completed tasks"
-                />
-                <StatsCard
-                    title="Pending Tasks"
-                    value={stats.pendingCollections}
-                    icon={Clock}
-                    description="Tasks waiting for action"
-                    trend={`${stats.pendingCollections > 5 ? 'High Demand' : 'Normal'}`}
-                    trendUp={stats.pendingCollections < 5}
-                />
-                <StatsCard
-                    title="Today's Performance"
-                    value={stats.todayCollections}
-                    icon={TrendingUp}
-                    description="Collections verified today"
-                    trend="+2 from yesterday"
-                    trendUp={true}
-                />
-            </div>
+            <motion.div variants={itemVariants} className="flex overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-3 sm:gap-6 gap-3 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                <div className="min-w-[85vw] sm:min-w-0 snap-center">
+                    <KpiCard
+                        title="Total Collections"
+                        value={stats.totalCollections}
+                        icon={CheckCircle}
+                        description="Lifetime completed tasks"
+                        className="rounded-2xl"
+                    />
+                </div>
+                <div className="min-w-[85vw] sm:min-w-0 snap-center">
+                    <KpiCard
+                        title="Pending Tasks"
+                        value={stats.pendingCollections}
+                        icon={Clock}
+                        description="Tasks waiting for action"
+                        className="rounded-2xl"
+                        trend={{
+                            value: stats.pendingCollections * 2, // arbitrary trend for visual
+                            label: stats.pendingCollections > 5 ? 'High Demand' : 'Normal Load',
+                            isPositive: stats.pendingCollections < 5
+                        }}
+                    />
+                </div>
+                <div className="min-w-[85vw] sm:min-w-0 snap-center">
+                    <KpiCard
+                        title="Today's Verified"
+                        value={stats.todayCollections}
+                        icon={TrendingUp}
+                        description="Collections verified today"
+                        className="rounded-2xl"
+                        trend={{
+                            value: 12,
+                            label: "vs yesterday",
+                            isPositive: true
+                        }}
+                    />
+                </div>
+            </motion.div>
 
             {/* Filters & Search */}
-            <TaskFilters
-                filter={filter}
-                setFilter={setFilter}
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-            />
+            <motion.div variants={itemVariants} className="sticky top-0 md:top-0 z-40 bg-background/80 backdrop-blur-xl pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:pb-0 border-b border-border/40 md:border-none pt-2">
+                <TaskFilters
+                    filter={filter}
+                    setFilter={setFilter}
+                    searchQuery={searchQuery}
+                    setSearchQuery={setSearchQuery}
+                />
+            </motion.div>
 
             {/* Task Grid */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 <AnimatePresence mode="popLayout">
                     {loading ? (
-                        <div className="col-span-full flex justify-center py-12">
-                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        <div className="col-span-full flex justify-center py-16">
+                            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                         </div>
                     ) : filteredTasks.length === 0 ? (
                         <motion.div
-                            initial={{ opacity: 0, scale: 0.9 }}
+                            initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            className="col-span-full flex flex-col items-center justify-center py-12 text-center border-2 border-dashed rounded-xl"
+                            className="col-span-full flex flex-col items-center justify-center py-16 text-center border border-dashed border-border/60 bg-muted/10 rounded-xl"
                         >
-                            <div className="bg-gray-100 p-4 rounded-full dark:bg-gray-800 mb-3">
-                                <Search className="h-6 w-6 text-gray-400" />
+                            <div className="bg-secondary p-4 rounded-full mb-4 shadow-sm">
+                                <Search className="h-6 w-6 text-muted-foreground" />
                             </div>
-                            <h3 className="font-semibold text-lg">No tasks found</h3>
-                            <p className="text-muted-foreground">Try adjusting your filters or search query.</p>
+                            <h3 className="font-bold text-lg tracking-tight">No tasks found</h3>
+                            <p className="text-sm font-medium text-muted-foreground mt-1 max-w-sm">Try adjusting your filters or search query to find more collections.</p>
                         </motion.div>
                     ) : (
                         filteredTasks.map((task) => (
@@ -151,6 +201,17 @@ export default function CollectorDashboard() {
                 onClose={() => setIsVerificationOpen(false)}
                 onVerify={handleVerifyCollection}
             />
-        </div>
+
+            {/* Mobile Floating Refresh Button */}
+            <div className="md:hidden fixed bottom-24 right-4 z-40">
+                <Button
+                    size="icon"
+                    className="rounded-full h-12 w-12 shadow-2xl bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95 transition-transform"
+                    onClick={refreshTasks}
+                >
+                    <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
+                </Button>
+            </div>
+        </motion.div>
     )
 }

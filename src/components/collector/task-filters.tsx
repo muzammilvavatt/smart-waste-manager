@@ -18,15 +18,18 @@ export function TaskFilters({ filter, setFilter, searchQuery, setSearchQuery }: 
     ]
 
     return (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4 bg-white dark:bg-gray-950 sticky top-0 z-10">
-            <div className="flex gap-1 bg-gray-100 p-1 rounded-lg dark:bg-gray-800 overflow-x-auto w-full sm:w-auto scrollbar-hide">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 py-3 sm:py-4">
+            <div className="flex gap-1.5 sm:gap-1 p-1 rounded-xl sm:bg-gray-100 sm:dark:bg-gray-800 overflow-x-auto w-full sm:w-auto scrollbar-hide [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                 {filters.map((f) => (
                     <Button
                         key={f.id}
                         variant={filter === f.id ? 'default' : 'ghost'}
                         onClick={() => setFilter(f.id)}
                         size="sm"
-                        className={`rounded-md px-3 text-xs sm:text-sm whitespace-nowrap ${filter === f.id ? 'shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'}`}
+                        className={`rounded-full sm:rounded-md px-4 sm:px-3 h-8 sm:h-9 text-[13px] sm:text-sm whitespace-nowrap font-semibold tracking-tight transition-all
+                            ${filter === f.id
+                                ? 'shadow-md bg-foreground text-background sm:bg-primary sm:text-primary-foreground'
+                                : 'bg-muted/50 sm:bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted'}`}
                     >
                         {f.label}
                     </Button>
@@ -34,10 +37,10 @@ export function TaskFilters({ filter, setFilter, searchQuery, setSearchQuery }: 
             </div>
 
             <div className="relative w-full sm:w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
                 <Input
-                    placeholder="Search..."
-                    className="pl-9 h-9 w-full bg-gray-50/50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-800 focus:bg-white dark:focus:bg-gray-950 transition-all rounded-full text-xs"
+                    placeholder="Search tasks..."
+                    className="pl-9 h-10 w-full bg-muted/50 border-transparent focus:border-primary/30 focus:bg-background transition-all rounded-full text-sm font-medium placeholder:text-muted-foreground/50 shadow-sm"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                 />

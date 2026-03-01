@@ -3,46 +3,46 @@ import { CollectionTask } from '@/types';
 import { getTasks, updateTaskStatus } from '@/lib/store';
 import toast from 'react-hot-toast';
 import { useNotifications } from '@/contexts/notification-context';
+import useSWR from 'swr';
 
 export function useCollectionTasks(user: { id: string } | null, scope: 'assigned' | 'all' = 'assigned') {
-    const [tasks, setTasks] = useState<CollectionTask[]>([]);
-    const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
     const { addNotification } = useNotifications();
 
-    const fetchTasks = async () => {
-        // If assigned scope, we need a user. If all scope, we just need to be authenticated (user exists)
-        if (!user) return;
-
-        try {
-            setLoading(true);
-            // Pass user.id only if scope is 'assigned'
-            const userId = scope === 'assigned' ? user.id : undefined;
-            const data = await getTasks("collector", userId);
-            setTasks(data);
-        } catch (error) {
-            console.error("Failed to fetch tasks", error);
-            toast.error("Failed to load tasks");
-        } finally {
-            setLoading(false);
-        }
+    const fetcher = async () => {
+        if (!user) return [];
+        const userId = scope === 'assigned' ? user.id : undefined;
+        return getTasks("collector", userId);
     };
 
-    useEffect(() => {
-        fetchTasks();
-    }, [user, scope]);
+    const swrKey = user ? `tasks-collector-${scope}-${user?.id || 'all'}` : null;
 
-    const refreshTasks = () => fetchTasks();
+    const { data: tasks = [], error, isLoading: loading, mutate } = useSWR<CollectionTask[]>(
+        swrKey,
+        fetcher,
+        {
+            revalidateOnFocus: false, // Don't constantly ping on focus
+        }
+    );
+
+    const refreshTasks = () => mutate();
 
     const handleStatusUpdate = async (taskId: string, newStatus: CollectionTask['status'], proofImage?: string) => {
         try {
+            // Optimistic update
+            const updatedTasks = tasks.map(t =>
+                t.id === taskId ? { ...t, status: newStatus, proofImage: proofImage || t.proofImage } : t
+            );
+            mutate(updatedTasks, false); // Update locally without revalidating instantly
+
             await updateTaskStatus(taskId, newStatus, user?.id, proofImage);
-            await refreshTasks();
+            await mutate(); // Revalidate with server
             return true;
         } catch (error) {
             console.error("Failed to update task", error);
             toast.error("Failed to update task status");
+            await mutate(); // Revert optimistic update on error
             return false;
         }
     };

@@ -5,8 +5,7 @@ import { useState, useEffect } from "react"
 import { useAuth } from "@/contexts/auth-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Trash2, Loader2 } from "lucide-react"
-import { UserRole } from "@/types"
+import { Loader2, ShieldAlert, User, Mail, Lock, CheckSquare } from "lucide-react"
 import toast from "react-hot-toast"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -54,7 +53,7 @@ export default function RegisterPage() {
 
     if (!isInitialized || user) {
         return (
-            <div className="flex justify-center items-center min-h-[500px]">
+            <div className="flex justify-center items-center h-full min-h-[500px]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         )
@@ -73,89 +72,137 @@ export default function RegisterPage() {
     }
 
     return (
-        <div className="grid gap-6">
-            <div className="text-center">
-                <h1 className="text-3xl font-bold">Create an Account</h1>
-                <p className="text-balance text-muted-foreground">
-                    Enter your email below to create your account
+        <div className="flex flex-col gap-6 w-full max-w-[420px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="flex flex-col space-y-2 text-center mb-4 sm:mb-6">
+                <h1 className="text-3xl font-bold tracking-tight text-foreground">
+                    Create an account
+                </h1>
+                <p className="text-muted-foreground text-sm">
+                    Enter your details below to get started
                 </p>
             </div>
 
-            <form className="grid gap-4" onSubmit={handleSubmit(onSubmit)}>
-                {globalError && (
-                    <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
-                        {globalError}
+            <div className="bg-card border border-border/40 rounded-[2rem] p-6 sm:p-8 w-full relative overflow-hidden shadow-sm">
+
+
+                <form className="flex flex-col gap-4 sm:gap-5" onSubmit={handleSubmit(onSubmit)}>
+                    {globalError && (
+                        <div className="rounded-xl bg-destructive/10 p-4 text-sm text-destructive font-medium border border-destructive/20 flex items-start gap-3">
+                            <ShieldAlert className="w-5 h-5 shrink-0" />
+                            <p>{globalError}</p>
+                        </div>
+                    )}
+
+                    <div className="flex flex-col gap-2">
+                        <label htmlFor="name" className="text-sm font-semibold text-foreground/90">
+                            Full Name
+                        </label>
+                        <div className="relative">
+                            <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground/70" />
+                            <Input
+                                id="name"
+                                type="text"
+                                placeholder="John Doe"
+                                required
+                                className={`h-12 pl-11 rounded-xl bg-background/50 border-border/50 transition-all ${errors.name ? "border-destructive/50 focus-visible:ring-destructive/30" : "focus-visible:border-primary/50 focus-visible:ring-primary/20"
+                                    }`}
+                                {...register("name")}
+                            />
+                        </div>
+                        {errors.name && (
+                            <p className="text-xs text-destructive font-medium mt-1">{errors.name.message}</p>
+                        )}
                     </div>
-                )}
 
-                <div className="grid gap-2">
-                    <label htmlFor="name">Full Name</label>
-                    <Input
-                        id="name"
-                        type="text"
-                        placeholder="John Doe"
-                        required
-                        className={errors.name ? "border-red-500" : ""}
-                        {...register("name")}
-                    />
-                    {errors.name && (
-                        <p className="text-xs text-red-500">{errors.name.message}</p>
-                    )}
-                </div>
+                    <div className="flex flex-col gap-2">
+                        <label htmlFor="email" className="text-sm font-semibold text-foreground/90">
+                            Email Address
+                        </label>
+                        <div className="relative">
+                            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground/70" />
+                            <Input
+                                id="email"
+                                type="email"
+                                placeholder="name@example.com"
+                                required
+                                className={`h-12 pl-11 rounded-xl bg-background/50 border-border/50 transition-all ${errors.email ? "border-destructive/50 focus-visible:ring-destructive/30" : "focus-visible:border-primary/50 focus-visible:ring-primary/20"
+                                    }`}
+                                {...register("email")}
+                            />
+                        </div>
+                        {errors.email && (
+                            <p className="text-xs text-destructive font-medium mt-1">{errors.email.message}</p>
+                        )}
+                    </div>
 
-                <div className="grid gap-2">
-                    <label htmlFor="email">Email</label>
-                    <Input
-                        id="email"
-                        type="email"
-                        placeholder="m@example.com"
-                        required
-                        className={errors.email ? "border-red-500" : ""}
-                        {...register("email")}
-                    />
-                    {errors.email && (
-                        <p className="text-xs text-red-500">{errors.email.message}</p>
-                    )}
-                </div>
+                    <div className="flex flex-col gap-2">
+                        <label htmlFor="password" className="text-sm font-semibold text-foreground/90">
+                            Password
+                        </label>
+                        <div className="relative">
+                            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground/70" />
+                            <Input
+                                id="password"
+                                type="password"
+                                placeholder="••••••••"
+                                required
+                                className={`h-12 pl-11 rounded-xl bg-background/50 border-border/50 transition-all ${errors.password ? "border-destructive/50 focus-visible:ring-destructive/30" : "focus-visible:border-primary/50 focus-visible:ring-primary/20"
+                                    }`}
+                                {...register("password")}
+                            />
+                        </div>
+                        {errors.password && (
+                            <p className="text-xs text-destructive font-medium mt-1">{errors.password.message}</p>
+                        )}
+                    </div>
 
-                <div className="grid gap-2">
-                    <label htmlFor="password">Password</label>
-                    <Input
-                        id="password"
-                        type="password"
-                        required
-                        className={errors.password ? "border-red-500" : ""}
-                        {...register("password")}
-                    />
-                    {errors.password && (
-                        <p className="text-xs text-red-500">{errors.password.message}</p>
-                    )}
-                </div>
+                    <div className="flex flex-col gap-2">
+                        <label htmlFor="confirmPassword" className="text-sm font-semibold text-foreground/90">
+                            Confirm Password
+                        </label>
+                        <div className="relative">
+                            <CheckSquare className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground/70" />
+                            <Input
+                                id="confirmPassword"
+                                type="password"
+                                placeholder="••••••••"
+                                required
+                                className={`h-12 pl-11 rounded-xl bg-background/50 border-border/50 transition-all ${errors.confirmPassword ? "border-destructive/50 focus-visible:ring-destructive/30" : "focus-visible:border-primary/50 focus-visible:ring-primary/20"
+                                    }`}
+                                {...register("confirmPassword")}
+                            />
+                        </div>
+                        {errors.confirmPassword && (
+                            <p className="text-xs text-destructive font-medium mt-1">{errors.confirmPassword.message}</p>
+                        )}
+                    </div>
 
-                <div className="grid gap-2">
-                    <label htmlFor="confirmPassword">Confirm Password</label>
-                    <Input
-                        id="confirmPassword"
-                        type="password"
-                        required
-                        className={errors.confirmPassword ? "border-red-500" : ""}
-                        {...register("confirmPassword")}
-                    />
-                    {errors.confirmPassword && (
-                        <p className="text-xs text-red-500">{errors.confirmPassword.message}</p>
-                    )}
-                </div>
+                    <Button
+                        type="submit"
+                        size="lg"
+                        className="w-full h-12 rounded-xl font-semibold mt-4"
+                        disabled={isLoading}
+                    >
+                        {isLoading ? (
+                            <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                        ) : null}
+                        <span className="flex items-center justify-center gap-2">
+                            {isLoading ? "Creating account..." : "Sign Up"}
+                        </span>
+                    </Button>
+                </form>
+            </div>
 
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? "Creating account..." : "Sign Up"}
-                </Button>
-            </form>
-
-            <div className="mt-4 text-center text-sm">
-                Already have an account?{" "}
-                <Link href="/login" className="underline">
-                    Login
-                </Link>
+            <div className="text-center mt-2">
+                <p className="text-sm font-medium text-muted-foreground">
+                    Already have an account?{" "}
+                    <Link
+                        href="/login"
+                        className="text-primary hover:text-primary/80 font-semibold underline-offset-4 hover:underline transition-colors"
+                    >
+                        Sign in
+                    </Link>
+                </p>
             </div>
         </div>
     )

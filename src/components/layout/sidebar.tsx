@@ -16,10 +16,9 @@ import {
     Award,
     Upload,
     Settings,
-    Bell
 } from "lucide-react"
-import { motion } from "framer-motion"
 import { Logo } from "@/components/shared/logo"
+import { UserAvatar } from "@/components/shared/user-avatar"
 import { ThemeToggle } from "@/components/shared/theme-toggle"
 
 export const Sidebar = memo(function Sidebar() {
@@ -58,82 +57,71 @@ export const Sidebar = memo(function Sidebar() {
                 : "/"
 
     return (
-        <aside className="hidden md:flex flex-col w-64 lg:w-72 h-screen sticky top-0 left-0 border-r border-border/40 bg-white/60 dark:bg-black/40 backdrop-blur-xl z-40 transition-all duration-300">
-            <div className="flex h-20 items-center justify-between px-6 border-b border-border/40">
+        <aside className="hidden md:flex flex-col w-[260px] h-screen sticky top-0 left-0 border-r border-border/60 bg-white dark:bg-[#09090b] z-40 transition-all duration-300 shadow-[2px_0_8px_rgba(0,0,0,0.02)] pt-2 relative">
+            <div className="flex h-16 items-center justify-between px-6 mb-4">
                 <Link href={dashboardLink} className="hover:opacity-80 transition-opacity">
-                    <Logo />
+                    <Logo className="scale-90 origin-left" />
                 </Link>
-                <div className="scale-90">
+                <div className="scale-90 text-muted-foreground hover:text-foreground transition-colors">
                     <ThemeToggle />
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto py-6 px-4 space-y-1">
-                <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4 px-2">
-                    Menu
+            <div className="flex-1 overflow-y-auto py-2 px-3 space-y-6">
+                <div>
+                    <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest mb-3 px-3">
+                        Main Menu
+                    </div>
+                    <nav className="grid gap-[2px]">
+                        {links.map((link, index) => {
+                            const Icon = link.icon
+                            const isActive = pathname === link.href
+                            return (
+                                <Link
+                                    key={index}
+                                    href={link.href}
+                                    className={cn(
+                                        "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-all duration-200 group relative outline-none",
+                                        isActive
+                                            ? "bg-secondary/60 text-foreground font-medium"
+                                            : "text-muted-foreground hover:bg-secondary/40 hover:text-foreground font-medium"
+                                    )}
+                                >
+                                    {isActive && (
+                                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-[calc(100%-12px)] rounded-r-full bg-primary" />
+                                    )}
+                                    <Icon className={cn("h-[18px] w-[18px]", isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground")} />
+                                    <span>{link.label}</span>
+                                </Link>
+                            )
+                        })}
+                    </nav>
                 </div>
-                <nav className="grid gap-1">
-                    {links.map((link, index) => {
-                        const Icon = link.icon
-                        const isActive = pathname === link.href
-                        return (
-                            <Link
-                                key={index}
-                                href={link.href}
-                                className={cn(
-                                    "relative flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all duration-200 group",
-                                    isActive
-                                        ? "text-primary-foreground font-semibold"
-                                        : "text-muted-foreground hover:text-foreground hover:bg-white/50 dark:hover:bg-white/5"
-                                )}
-                            >
-                                {isActive && (
-                                    <motion.div
-                                        layoutId="sidebar-active-tab"
-                                        className="absolute inset-0 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 shadow-md shadow-emerald-500/20"
-                                        initial={false}
-                                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                                    />
-                                )}
-                                <span className="relative z-10 flex items-center gap-3">
-                                    <Icon className={cn("h-5 w-5 transition-transform duration-200 group-hover:scale-110", isActive ? "text-white" : "")} />
-                                    <span className={isActive ? "text-white" : ""}>{link.label}</span>
-                                </span>
-                                {isActive && (
-                                    <motion.div
-                                        initial={{ opacity: 0, x: -10 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        className="absolute right-3 w-1.5 h-1.5 rounded-full bg-white shadow-sm z-10"
-                                    />
-                                )}
-                            </Link>
-                        )
-                    })}
-                </nav>
             </div>
 
-            <div className="p-4 border-t border-border/40 bg-white/30 dark:bg-black/20 backdrop-blur-sm">
-                <div className="rounded-xl border border-border/50 bg-white/50 dark:bg-white/5 p-4 shadow-sm">
-                    <div className="flex items-center gap-3 mb-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-teal-400 text-white font-bold shadow-sm">
-                            {user.name.charAt(0)}
-                        </div>
+            <div className="p-4 mt-auto border-t border-border/40">
+                <div className="flex flex-col rounded-lg bg-secondary/30 p-3 outline outline-1 outline-border/50">
+                    <div className="flex items-center gap-3 mb-4">
+                        <UserAvatar
+                            avatarId={user.profileImage}
+                            fallbackName={user.name}
+                            className="h-9 w-9 rounded-lg border border-border/50"
+                            iconClassName="h-4 w-4"
+                        />
                         <div className="flex-1 overflow-hidden">
                             <p className="truncate text-sm font-semibold text-foreground">{user.name}</p>
                             <p className="truncate text-xs text-muted-foreground capitalize">{user.role}</p>
                         </div>
                     </div>
 
-                    <div className="mt-2">
-                        <button
-                            onClick={logout}
-                            className="flex w-full items-center justify-center gap-2 rounded-lg px-2 py-2 text-xs font-medium text-destructive hover:bg-destructive/10 transition-colors"
-                            title="Sign Out"
-                        >
-                            <LogOut className="h-4 w-4" />
-                            Sign Out
-                        </button>
-                    </div>
+                    <button
+                        onClick={logout}
+                        className="flex w-full items-center justify-center gap-2 rounded-md px-2 py-1.5 text-xs font-semibold text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                        title="Sign Out"
+                    >
+                        <LogOut className="h-[14px] w-[14px]" />
+                        Sign Out
+                    </button>
                 </div>
             </div>
         </aside>

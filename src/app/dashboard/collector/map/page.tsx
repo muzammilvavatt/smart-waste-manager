@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic"
 import { useEffect, useState, Suspense, useMemo } from "react"
-import { motion, useDragControls } from "framer-motion"
+import { motion, useDragControls, AnimatePresence } from "framer-motion"
 import { useAuth } from "@/contexts/auth-context"
 import { useSearchParams, useRouter } from "next/navigation"
 import { CollectionTask } from "@/types"
@@ -144,6 +144,8 @@ function CollectorMapContent() {
         }
     }
 
+    const [isMinimized, setIsMinimized] = useState(false)
+
     return (
         <div className="flex flex-col h-[calc(100vh-8rem)] min-h-[500px] w-full relative rounded-xl overflow-hidden border bg-gray-100 dark:bg-gray-800">
             {/* Back Button for mobile/embedded context */}
@@ -167,65 +169,106 @@ function CollectorMapContent() {
             />
 
             {/* Overlay for tasks list */}
-            <motion.div
-                drag
-                dragListener={false}
-                dragControls={dragControls}
-                dragMomentum={false}
-                className="absolute top-4 right-4 w-80 bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-xl dark:bg-gray-900/95 z-[1000] max-h-[60vh] flex flex-col border border-gray-200 dark:border-gray-700 hidden md:flex"
-            >
-                <div
-                    onPointerDown={(e) => dragControls.start(e)}
-                    className="flex items-center justify-between mb-4 cursor-move touch-none select-none"
-                    title="Drag to move"
-                >
-                    <h3 className="font-bold flex items-center gap-2">
-                        <span className="w-8 h-1 bg-gray-300 rounded-full mx-auto md:hidden block"></span>
-                        Active Collections
-                    </h3>
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setShowNearby(!showNearby);
-                        }}
-                        className={`p-2 rounded-md transition-colors flex items-center gap-1.5 text-xs font-medium ${showNearby ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300'}`}
+            <AnimatePresence mode="wait">
+                {isMinimized ? (
+                    <motion.div
+                        key="minimized"
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.1, ease: "easeInOut" }}
+                        className="absolute top-4 right-4 z-[1000] hidden md:block"
                     >
-                        <Filter className="h-3.5 w-3.5" />
-                        {showNearby ? 'Showing Nearby' : 'All Tasks'}
-                    </button>
-                </div>
-
-                <div className="space-y-2 overflow-y-auto pr-1 flex-1">
-                    {loading ? (
-                        <div className="flex items-center gap-2 text-sm text-gray-500 py-4">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Loading tasks...
-                        </div>
-                    ) : processedTasks.length === 0 ? (
-                        <div className="text-center py-8">
-                            <p className="text-sm text-gray-500 font-medium">{showNearby ? 'No tasks within 5km' : 'No active tasks found'}</p>
-                            {showNearby && <button onClick={() => setShowNearby(false)} className="text-xs text-blue-600 mt-2 font-bold hover:underline">Clear Filter</button>}
-                        </div>
-                    ) : (
-                        processedTasks.map(task => (
-                            <div key={task.id} className="mb-3">
-                                <TaskCard
-                                    task={task}
-                                    onClaim={claimTask}
-                                    onVerify={(task) => {
-                                        setSelectedTask(task);
-                                        setIsVerificationOpen(true);
+                        <Button
+                            onClick={() => setIsMinimized(false)}
+                            className="bg-white text-gray-900 border border-gray-200 shadow-xl hover:bg-gray-50 flex items-center gap-2 dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700 dark:hover:bg-gray-800 px-4 h-12 rounded-lg font-bold transition-all duration-200 hover:bg-gray-100 active:scale-95"
+                        >
+                            <Filter className="h-4 w-4" />
+                            Show Collections ({processedTasks.length})
+                        </Button>
+                    </motion.div>
+                ) : (
+                    <motion.div
+                        key="expanded"
+                        drag
+                        dragListener={false}
+                        dragControls={dragControls}
+                        dragMomentum={false}
+                        initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                        transition={{ duration: 0.1, ease: "easeInOut" }}
+                        className="absolute top-4 right-4 w-80 bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-xl dark:bg-gray-900/95 z-[1000] max-h-[60vh] flex flex-col border border-gray-200 dark:border-gray-700 hidden md:flex"
+                    >
+                        <div
+                            onPointerDown={(e) => dragControls.start(e)}
+                            className="flex items-center justify-between mb-4 cursor-move touch-none select-none"
+                            title="Drag to move"
+                        >
+                            <div className="flex items-center gap-3 w-full">
+                                <h3 className="font-bold flex items-center gap-2 flex-1">
+                                    <span className="w-8 h-1 bg-gray-300 rounded-full mx-auto md:hidden block"></span>
+                                    Active Collections
+                                </h3>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setIsMinimized(true);
                                     }}
-                                    onMapClick={(taskId) => {
-                                        router.push(`/dashboard/collector/map?taskId=${taskId}`);
-                                    }}
-                                    compact={true}
-                                />
+                                    className="p-1.5 -mr-1.5 rounded-md transition-all duration-200 text-gray-500 hover:text-gray-900 hover:bg-gray-200 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-gray-800 hover:scale-110 active:scale-95 flex items-center justify-center bg-gray-100 dark:bg-gray-800/50"
+                                    title="Minimize panel"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m18 15-6-6-6 6" /></svg>
+                                </button>
                             </div>
-                        ))
-                    )}
-                </div>
-            </motion.div>
+                        </div>
+
+                        <div className="flex items-center justify-between mb-2">
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowNearby(!showNearby);
+                                }}
+                                className={`p-2 rounded-md transition-colors flex items-center gap-1.5 text-xs font-medium w-full justify-center ${showNearby ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300'}`}
+                            >
+                                <Filter className="h-3.5 w-3.5" />
+                                {showNearby ? 'Showing Nearby' : 'All Tasks'}
+                            </button>
+                        </div>
+
+                        <div className="space-y-2 overflow-y-auto pr-1 flex-1">
+                            {loading ? (
+                                <div className="flex items-center gap-2 text-sm text-gray-500 py-4">
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    Loading tasks...
+                                </div>
+                            ) : processedTasks.length === 0 ? (
+                                <div className="text-center py-8">
+                                    <p className="text-sm text-gray-500 font-medium">{showNearby ? 'No tasks within 5km' : 'No active tasks found'}</p>
+                                    {showNearby && <button onClick={() => setShowNearby(false)} className="text-xs text-blue-600 mt-2 font-bold hover:underline">Clear Filter</button>}
+                                </div>
+                            ) : (
+                                processedTasks.map(task => (
+                                    <div key={task.id} className="mb-3">
+                                        <TaskCard
+                                            task={task}
+                                            onClaim={claimTask}
+                                            onVerify={(task) => {
+                                                setSelectedTask(task);
+                                                setIsVerificationOpen(true);
+                                            }}
+                                            onMapClick={(taskId) => {
+                                                router.push(`/dashboard/collector/map?taskId=${taskId}`);
+                                            }}
+                                            compact={true}
+                                        />
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             <VerificationModal
                 task={selectedTask}
@@ -233,6 +276,6 @@ function CollectorMapContent() {
                 onClose={() => setIsVerificationOpen(false)}
                 onVerify={handleVerifyCollection}
             />
-        </div >
+        </div>
     )
 }

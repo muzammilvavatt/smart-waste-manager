@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { MapPin, CheckCircle, Clock, Navigation, AlertTriangle, Camera, ExternalLink } from "lucide-react"
 import { motion } from "framer-motion"
-
+import { SwipeableCard } from "@/components/ui/swipeable-card"
 interface TaskCardProps {
     task: CollectionTask;
     onClaim?: (taskId: string) => void;
@@ -14,11 +14,11 @@ interface TaskCardProps {
 
 export function TaskCard({ task, onClaim, onVerify, onMapClick, compact = false }: TaskCardProps) {
     const statusColor = {
-        verified: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-        collected: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-        'in-progress': 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400',
-        rejected: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-        pending: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+        verified: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400',
+        collected: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400',
+        'in-progress': 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-400',
+        rejected: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400',
+        pending: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-400'
     }
 
     const StatusIcon = {
@@ -30,9 +30,8 @@ export function TaskCard({ task, onClaim, onVerify, onMapClick, compact = false 
     }[task.status] || Clock
 
     const handleGetDirections = (e: React.MouseEvent) => {
-        e.stopPropagation(); // Prevent triggering other card clicks
+        e.stopPropagation();
 
-        // Prioritize coordinates for exact navigation, fallback to location name
         const destination = task.coordinates
             ? `${task.coordinates.lat},${task.coordinates.lng}`
             : encodeURIComponent(task.location);
@@ -43,138 +42,202 @@ export function TaskCard({ task, onClaim, onVerify, onMapClick, compact = false 
     return (
         <motion.div
             layout
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.2 }}
         >
-            <Card className="overflow-hidden group hover:shadow-lg transition-all duration-300 border-gray-200 dark:border-gray-800 h-full flex flex-col">
-                {/* Map Placeholder / Header Image - Only show if NOT compact */}
-                {!compact && (
-                    <div className="h-32 bg-gray-100 dark:bg-gray-800 relative overflow-hidden">
-                        <div className="absolute inset-0 opacity-10 bg-[url('https://upload.wikimedia.org/wikipedia/commons/e/ec/World_map_blank_without_borders.svg')] bg-cover bg-center" />
+            {/* Mobile swipeable view wrapper */}
+            <div className="md:hidden">
+                <SwipeableCard
+                    leftAction={
+                        task.status === 'pending'
+                            ? {
+                                icon: <CheckCircle className="w-6 h-6" />,
+                                label: "Claim",
+                                color: "#10b981", // emerald-500
+                                onAction: () => onClaim?.(task.id)
+                            }
+                            : undefined
+                    }
+                    rightAction={
+                        task.status === 'in-progress' || task.status === 'rejected'
+                            ? {
+                                icon: <Camera className="w-6 h-6" />,
+                                label: "Verify",
+                                color: "#3b82f6", // blue-500
+                                onAction: () => onVerify?.(task)
+                            }
+                            : undefined
+                    }
+                >
+                    <div className="bg-background dark:bg-zinc-900/40 border-b border-border/40 sm:border sm:rounded-xl relative overflow-hidden group active:bg-muted/30 transition-colors">
+                        {/* Status Indicator Bar */}
+                        <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${statusColor[task.status] || statusColor.pending} bg-opacity-100`} />
 
-                        {/* Status Badge */}
-                        <div className={`absolute top-2 right-2 px-2.5 py-1 rounded-full text-xs font-bold capitalize flex items-center gap-1.5 shadow-sm backdrop-blur-sm ${statusColor[task.status] || statusColor.pending}`}>
-                            <StatusIcon className="h-3.5 w-3.5" />
-                            {task.status}
+                        <div className="p-3.5 pl-5 flex items-center justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <h3 className="font-bold capitalize text-[15px] tracking-tight truncate text-foreground">
+                                        {task.wasteType}
+                                    </h3>
+                                    {task.wasteType === 'hazardous' && task.status === 'pending' && (
+                                        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-1.5 text-[12px] text-muted-foreground font-medium truncate pr-2">
+                                    <MapPin className="h-3 w-3 text-red-500/80 shrink-0" />
+                                    <span className="truncate">{task.location}</span>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col items-end gap-1.5 shrink-0">
+                                <span className="text-[11px] font-bold bg-secondary/80 px-2 py-0.5 rounded shadow-sm text-foreground">
+                                    {task.amount}
+                                </span>
+                                <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-sm flex items-center gap-1 ${statusColor[task.status] || statusColor.pending}`}>
+                                    {task.status}
+                                </span>
+                            </div>
                         </div>
 
-                        {/* Urgent Badge */}
-                        {task.wasteType === 'hazardous' && task.status === 'pending' && (
-                            <div className="absolute top-2 left-2 px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300 flex items-center gap-1.5 shadow-sm animate-pulse">
-                                <AlertTriangle className="h-3.5 w-3.5" /> URGENT
+                        {/* Quick Actions Bar (Bottom of list item) */}
+                        {task.status !== 'collected' && task.status !== 'verified' && (
+                            <div className="bg-muted/20 border-t border-border/20 px-3 py-2 flex items-center justify-between text-[11px] font-medium text-muted-foreground">
+                                <button onClick={handleGetDirections} className="flex items-center gap-1.5 hover:text-foreground active:text-foreground transition-colors py-1 px-2 -ml-2 rounded-md active:bg-muted/50">
+                                    <Navigation className="h-3 w-3 text-blue-500" /> View Map
+                                </button>
+
+                                <span className="flex items-center gap-1.5 opacity-70">
+                                    <Clock className="h-3 w-3" /> {task.date.split(',')[0]}
+                                </span>
                             </div>
                         )}
+                    </div>
+                </SwipeableCard>
+            </div>
 
-                        {/* Location Badge */}
-                        <div className="absolute bottom-2 left-2 bg-white/90 dark:bg-black/80 backdrop-blur px-2.5 py-1 rounded-lg text-xs font-mono font-medium shadow-sm max-w-[90%] truncate flex items-center gap-1.5">
-                            <MapPin className="h-3.5 w-3.5 text-red-500" />
-                            {task.location}
+            {/* Desktop original view */}
+            <div className="hidden md:block h-full">
+                <Card className="overflow-hidden group hover:shadow-md transition-all duration-300 border-border/40 h-full flex flex-col bg-white dark:bg-zinc-900/40">
+                    {!compact && (
+                        <div className="h-28 bg-muted relative overflow-hidden border-b border-border/40">
+                            <div className="absolute inset-0 opacity-10 bg-[url('https://upload.wikimedia.org/wikipedia/commons/e/ec/World_map_blank_without_borders.svg')] bg-cover bg-center mix-blend-luminosity filter dark:invert" />
+
+                            {/* Status Badge */}
+                            <div className={`absolute top-2 right-2 px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 shadow-sm ${statusColor[task.status] || statusColor.pending}`}>
+                                <StatusIcon className="h-3 w-3" />
+                                {task.status}
+                            </div>
+
+                            {/* Urgent Badge */}
+                            {task.wasteType === 'hazardous' && task.status === 'pending' && (
+                                <div className="absolute top-2 left-2 px-2 py-0.5 rounded-sm text-[10px] uppercase font-bold bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300 flex items-center gap-1 shadow-sm animate-pulse">
+                                    <AlertTriangle className="h-3 w-3" /> Urgent
+                                </div>
+                            )}
+
+                            {/* Location Badge */}
+                            <div className="absolute bottom-2 left-2 bg-background/90 backdrop-blur-sm px-2 py-1 rounded-md text-[11px] font-semibold tracking-tight shadow-sm max-w-[90%] truncate flex items-center gap-1 border border-border/50">
+                                <MapPin className="h-3 w-3 text-red-500 shrink-0" />
+                                {task.location}
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
 
-                <CardContent className={`${compact ? 'p-2' : 'p-4'} flex-1 flex flex-col justify-between ${compact ? 'gap-2' : 'gap-4'}`}>
-                    <div>
-                        <div className="flex justify-between items-start mb-2">
-                            <h3 className={`font-bold capitalize ${compact ? 'text-sm' : 'text-lg'} flex items-center gap-2`}>
-                                {task.wasteType} {compact ? '' : 'Waste'}
-                                {compact && (
-                                    <span className={`ml-auto px-1.5 py-0.5 rounded-full text-[9px] font-bold capitalize ${statusColor[task.status] || statusColor.pending}`}>
-                                        {task.status}
-                                    </span>
-                                )}
-                            </h3>
-                            <span className="text-xs font-mono bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-gray-600 dark:text-gray-300">
-                                {task.amount}
-                            </span>
+                    <CardContent className={`${compact ? 'p-3' : 'p-5'} flex-1 flex flex-col justify-between ${compact ? 'gap-3' : 'gap-4'}`}>
+                        <div>
+                            <div className="flex justify-between items-start mb-1.5">
+                                <h3 className={`font-bold capitalize ${compact ? 'text-sm' : 'text-base tracking-tight'} flex items-center gap-2`}>
+                                    {task.wasteType} {compact ? '' : 'Waste'}
+                                    {compact && (
+                                        <span className={`ml-auto px-1.5 py-0.5 rounded-sm text-[9px] uppercase tracking-wider font-bold ${statusColor[task.status] || statusColor.pending}`}>
+                                            {task.status}
+                                        </span>
+                                    )}
+                                </h3>
+                                <span className="text-xs font-bold bg-secondary/80 px-2 py-0.5 rounded border border-border/40 text-foreground shadow-sm">
+                                    {task.amount}
+                                </span>
+                            </div>
+
+                            {compact && (
+                                <div className="mb-2 flex items-center gap-1.5 text-[11px] text-muted-foreground font-medium truncate">
+                                    <MapPin className="h-3 w-3 text-red-500 shrink-0" />
+                                    <span className="truncate">{task.location}</span>
+                                </div>
+                            )}
+
+                            {!compact && (
+                                <p className="text-[11px] text-muted-foreground font-medium flex items-center gap-1.5 uppercase tracking-wider">
+                                    <Clock className="h-3 w-3" /> {task.date}
+                                </p>
+                            )}
                         </div>
 
-                        {compact && (
-                            <div className="mb-2 flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 font-medium truncate">
-                                <MapPin className="h-3.5 w-3.5 text-red-500 shrink-0" />
-                                <span className="truncate">{task.location}</span>
-                            </div>
-                        )}
+                        <div className={`pt-4 mt-auto ${compact ? 'pt-3' : 'pt-4'}`}>
+                            {task.status === 'pending' && (
+                                <div className="flex flex-col sm:flex-row gap-2">
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={handleGetDirections}
+                                        className={`flex-1 ${compact ? 'h-7 text-[10px]' : 'h-8 text-xs font-semibold shadow-sm'}`}
+                                        title="Open Google Maps Directions"
+                                    >
+                                        <ExternalLink className={`mr-1.5 ${compact ? 'h-3 w-3' : 'h-3.5 w-3.5'}`} /> Route
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        onClick={() => onClaim?.(task.id)}
+                                        className={`flex-1 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm ${compact ? 'h-7 text-[10px]' : 'h-8 text-xs font-semibold'}`}
+                                    >
+                                        Claim Task
+                                    </Button>
+                                </div>
+                            )}
 
-                        {!compact && (
-                            <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                                <Clock className="h-3.5 w-3.5" /> Posted on {task.date}
-                            </p>
-                        )}
-                    </div>
+                            {(task.status === 'in-progress') && (
+                                <div className="flex flex-col sm:flex-row gap-2">
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={handleGetDirections}
+                                        className={`flex-1 ${compact ? 'h-7 text-[10px]' : 'h-8 text-xs font-semibold shadow-sm'}`}
+                                    >
+                                        <Navigation className={`mr-1.5 ${compact ? 'h-3 w-3' : 'h-3.5 w-3.5'}`} /> Map
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        className={`flex-1 bg-blue-600 hover:bg-blue-700 text-white shadow-sm ${compact ? 'h-7 text-[10px]' : 'h-8 text-xs font-semibold'}`}
+                                        onClick={() => onVerify?.(task)}
+                                    >
+                                        <Camera className={`mr-1.5 ${compact ? 'h-3 w-3' : 'h-3.5 w-3.5'}`} /> Upload
+                                    </Button>
+                                </div>
+                            )}
 
-                    <div className={`pt-3 border-t border-gray-100 dark:border-gray-800 mt-auto ${compact ? 'pt-2' : 'pt-3'}`}>
-                        {task.status === 'pending' && (
-                            <div className="grid grid-cols-2 gap-2">
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={handleGetDirections}
-                                    className={`w-full ${compact ? 'h-7 text-[10px]' : 'text-xs'}`}
-                                    title="Open Google Maps Directions"
-                                >
-                                    <ExternalLink className={`mr-2 ${compact ? 'h-3 w-3' : 'h-3.5 w-3.5'}`} /> Directions
-                                </Button>
-                                <Button
-                                    size="sm"
-                                    onClick={() => onClaim?.(task.id)}
-                                    className={`w-full bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow ${compact ? 'h-7 text-[10px]' : 'text-xs'}`}
-                                >
-                                    Pickup
-                                </Button>
-                            </div>
-                        )}
+                            {(task.status === 'rejected') && (
+                                <div className="flex gap-2">
+                                    <Button
+                                        size="sm"
+                                        className="w-full bg-red-600 hover:bg-red-700 text-white shadow-sm h-8 text-xs font-semibold animate-pulse"
+                                        onClick={() => onVerify?.(task)}
+                                    >
+                                        <Camera className="mr-1.5 h-3.5 w-3.5" /> Re-upload Proof
+                                    </Button>
+                                </div>
+                            )}
 
-                        {(task.status === 'in-progress') && (
-                            <div className="grid grid-cols-2 gap-2">
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={handleGetDirections}
-                                    className={`w-full ${compact ? 'h-7 text-[10px]' : 'text-xs'}`}
-                                >
-                                    <Navigation className={`mr-2 ${compact ? 'h-3 w-3' : 'h-3.5 w-3.5'}`} /> Navigate
+                            {(task.status === 'collected' || task.status === 'verified') && (
+                                <Button size="sm" variant="secondary" className="w-full cursor-default opacity-80 h-8 text-xs font-bold" disabled>
+                                    <CheckCircle className="mr-1.5 h-3.5 w-3.5 text-emerald-500" /> Task Completed
                                 </Button>
-                                <Button
-                                    size="sm"
-                                    className={`w-full bg-green-600 hover:bg-green-700 text-white shadow-sm hover:shadow ${compact ? 'h-7 text-[10px]' : 'text-xs'}`}
-                                    onClick={() => onVerify?.(task)}
-                                >
-                                    <Camera className={`mr-2 ${compact ? 'h-3 w-3' : 'h-3.5 w-3.5'}`} /> Verify
-                                </Button>
-                            </div>
-                        )}
-
-                        {(task.status === 'rejected') && (
-                            <div className="grid grid-cols-2 gap-2">
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={handleGetDirections}
-                                    className="w-full text-xs"
-                                >
-                                    <Navigation className="mr-2 h-3.5 w-3.5" /> Navigate
-                                </Button>
-                                <Button
-                                    size="sm"
-                                    className="w-full bg-red-600 hover:bg-red-700 text-white shadow-sm hover:shadow text-xs animate-pulse"
-                                    onClick={() => onVerify?.(task)}
-                                >
-                                    <Camera className="mr-2 h-3.5 w-3.5" /> Retry
-                                </Button>
-                            </div>
-                        )}
-
-                        {(task.status === 'collected' || task.status === 'verified') && (
-                            <Button size="sm" variant="ghost" className="w-full cursor-default hover:bg-transparent" disabled>
-                                <CheckCircle className="mr-2 h-4 w-4 text-green-500" /> Completed
-                            </Button>
-                        )}
-                    </div>
-                </CardContent>
-            </Card>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
         </motion.div>
     )
 }
