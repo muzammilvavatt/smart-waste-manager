@@ -76,11 +76,12 @@ function LocationButton() {
 interface MapViewProps {
     tasks: CollectionTask[]
     focusedTaskId?: string | null
+    userLocation?: [number, number] | null
     onClaimTask?: (taskId: string) => void
     onCompleteTask?: (taskId: string) => void
 }
 
-export default function MapView({ tasks, focusedTaskId, onClaimTask, onCompleteTask }: MapViewProps) {
+export default function MapView({ tasks, focusedTaskId, onClaimTask, onCompleteTask, userLocation }: MapViewProps) {
     const [isMounted, setIsMounted] = useState(false)
 
     useEffect(() => {
@@ -127,6 +128,19 @@ export default function MapView({ tasks, focusedTaskId, onClaimTask, onCompleteT
             />
             <MapUpdater center={center} zoom={zoom} />
             <LocationButton />
+            
+            {userLocation && (
+                <Marker
+                    position={userLocation}
+                    icon={L.divIcon({
+                        className: 'user-location-marker',
+                        html: '<div class="absolute w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-lg -translate-x-1/2 -translate-y-1/2"><div class="absolute inset-0 rounded-full bg-blue-500 animate-ping opacity-75"></div></div>',
+                        iconSize: [0, 0],
+                        iconAnchor: [0, 0]
+                    })}
+                />
+            )}
+
             {tasks.map(task => (
                 task.coordinates && (
                     <Marker

@@ -158,6 +158,7 @@ function CollectorMapContent() {
             <MapView
                 tasks={processedTasks}
                 focusedTaskId={focusedTaskId}
+                userLocation={userLocation}
                 onClaimTask={claimTask}
                 onCompleteTask={(taskId) => {
                     const task = tasks.find(t => t.id === taskId);
