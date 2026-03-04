@@ -136,14 +136,14 @@ export default function WasteUploadPage() {
     }
 
     return (
-        <div className="max-w-xl mx-auto space-y-6 pb-24 sm:pb-10 px-0 sm:px-4">
+        <div className="max-w-xl mx-auto space-y-6 pb-24 sm:pb-10 px-0 sm:px-4 animate-in fade-in slide-in-from-bottom-8 duration-700">
             <div className="flex flex-col gap-1.5 px-4 sm:px-0">
-                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Report Waste</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight bg-gradient-to-r from-emerald-600 to-teal-500 dark:from-emerald-400 dark:to-teal-300 bg-clip-text text-transparent drop-shadow-sm w-fit">Report Waste</h1>
                 <p className="text-muted-foreground text-[13px] sm:text-sm font-medium">Upload a photo to automatically identify the waste type.</p>
             </div>
 
             {/* ---> MOBILE UPLOAD UI (< md) <--- */}
-            <div className="md:hidden relative w-full aspect-[4/5] sm:aspect-video rounded-[2rem] sm:rounded-3xl overflow-hidden bg-zinc-100 dark:bg-black/60 sm:border sm:border-border/50 shadow-inner group transition-all mx-auto max-w-sm sm:max-w-none">
+            <div className="md:hidden relative w-full aspect-[4/5] sm:aspect-video rounded-[2rem] sm:rounded-3xl overflow-hidden bg-card/60 backdrop-blur-xl dark:bg-black/60 sm:border border border-emerald-500/20 shadow-[0_8px_30px_rgb(0,0,0,0.12)] group transition-all mx-auto max-w-sm sm:max-w-none">
                 {preview ? (
                     <>
                         <img src={preview} alt="Waste preview" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]" />
@@ -173,9 +173,9 @@ export default function WasteUploadPage() {
                     </>
                 ) : (
                     <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
-                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.08)_0%,transparent_70%)]" />
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.15)_0%,transparent_70%)] animate-pulse opacity-70" />
 
-                        <div className="relative z-10 h-20 w-20 sm:h-24 sm:w-24 bg-white dark:bg-black/50 rounded-full flex items-center justify-center mb-6 shadow-xl shadow-emerald-500/10 border border-emerald-500/20">
+                        <div className="relative z-10 h-20 w-20 sm:h-24 sm:w-24 bg-white/80 dark:bg-black/50 backdrop-blur-md rounded-full flex items-center justify-center mb-6 shadow-xl shadow-emerald-500/20 border border-emerald-500/30 group-hover:scale-105 transition-transform duration-300">
                             <Camera className="h-8 w-8 sm:h-10 sm:w-10 text-emerald-600 dark:text-emerald-500" />
                         </div>
 
@@ -225,7 +225,7 @@ export default function WasteUploadPage() {
 
             {/* ---> DESKTOP UPLOAD UI (>= md) <--- */}
             <div className="hidden md:block">
-                <Card className="border-2 border-dashed border-border/60 bg-muted/10 overflow-hidden hover:border-emerald-500/30 transition-colors shadow-sm rounded-2xl">
+                <Card className="border-2 border-dashed border-border/60 bg-card/60 backdrop-blur-xl overflow-hidden hover:border-emerald-500/50 transition-all shadow-sm hover:shadow-xl rounded-[2rem] group hover:-translate-y-1 duration-300">
                     <CardContent className="flex flex-col items-center justify-center p-8 sm:p-12 space-y-4">
                         {preview ? (
                             <div className="relative w-full aspect-video rounded-xl overflow-hidden shadow-sm border border-border/50 group bg-black/5 dark:bg-black/40 flex items-center justify-center">
@@ -266,7 +266,7 @@ export default function WasteUploadPage() {
                                 <div className="flex gap-4 w-full max-w-sm">
                                     <Button
                                         variant="outline"
-                                        className="cursor-pointer flex-1 font-bold group h-12 border-border/60 hover:bg-muted rounded-xl bg-white dark:bg-zinc-900 shadow-sm"
+                                        className="cursor-pointer flex-1 font-bold group h-12 border-border/40 hover:bg-muted/50 rounded-xl bg-background/50 backdrop-blur-sm shadow-sm transition-all"
                                         onClick={() => fileInputRef.current?.click()}
                                     >
                                         <Upload className="mr-2 h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
@@ -315,7 +315,7 @@ export default function WasteUploadPage() {
 
                     {/* Suspicious / Staged Waste Warning Banner */}
                     {isSuspicious && (
-                        <div className="flex items-start gap-3 p-4 rounded-[1.25rem] bg-orange-50 border border-orange-200 dark:bg-orange-500/10 dark:border-orange-500/20 animate-in fade-in duration-300">
+                        <div className="flex items-start gap-3 p-4 rounded-[1.25rem] bg-orange-50/80 backdrop-blur-md border border-orange-200 dark:bg-orange-500/10 dark:border-orange-500/20 animate-in fade-in duration-300">
                             <AlertTriangle className="h-5 w-5 text-orange-600 dark:text-orange-400 shrink-0 mt-0.5" />
                             <div>
                                 <p className="font-bold text-sm text-orange-800 dark:text-orange-300">Suspicious Activity Detected</p>
@@ -328,7 +328,7 @@ export default function WasteUploadPage() {
                     )}
 
                     {result.category !== 'non_waste' && result.category !== 'rejected' && (
-                        <div className="space-y-5 bg-transparent sm:bg-card p-0 sm:p-6 rounded-[2rem] sm:border border-border/50 sm:shadow-sm">
+                        <div className="space-y-5 bg-transparent sm:bg-card/60 sm:backdrop-blur-xl p-0 sm:p-6 rounded-[2rem] sm:border border-border/40 sm:shadow-sm">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 pb-3 border-b border-border/40">
                                 <div>
                                     <h3 className="text-xl font-bold tracking-tight">Location Details</h3>
@@ -372,7 +372,7 @@ export default function WasteUploadPage() {
                             </div>
 
                             <Button
-                                className="w-full mt-8 h-14 rounded-2xl text-base font-bold shadow-[0_8px_30px_rgb(0,0,0,0.12)] bg-emerald-600 hover:bg-emerald-700 text-white transition-all active:scale-[0.98]"
+                                className="w-full mt-8 h-14 rounded-2xl text-base font-bold shadow-[0_8px_30px_rgb(16,185,129,0.2)] bg-emerald-600 hover:bg-emerald-700 text-white transition-all active:scale-[0.98] hover:shadow-[0_8px_30px_rgb(16,185,129,0.4)] hover:-translate-y-1"
                                 onClick={handleSubmit}
                                 disabled={!location || !locationName.trim()}
                             >

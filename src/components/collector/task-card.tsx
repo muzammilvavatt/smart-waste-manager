@@ -5,7 +5,7 @@ import { MapPin, CheckCircle, Clock, Navigation, AlertTriangle, Camera, External
 import { motion } from "framer-motion"
 import { SwipeableCard } from "@/components/ui/swipeable-card"
 interface TaskCardProps {
-    task: CollectionTask;
+    task: CollectionTask & { distance?: number };
     onClaim?: (taskId: string) => void;
     onVerify?: (task: CollectionTask) => void;
     onMapClick?: (taskId: string) => void;
@@ -88,6 +88,14 @@ export function TaskCard({ task, onClaim, onVerify, onMapClick, compact = false 
                                 <div className="flex items-center gap-1.5 text-[12px] text-muted-foreground font-medium truncate pr-2">
                                     <MapPin className="h-3 w-3 text-red-500/80 shrink-0" />
                                     <span className="truncate">{task.location}</span>
+                                    {task.distance !== undefined && (
+                                        <>
+                                            <span className="w-1 h-1 rounded-full bg-muted-foreground/40 shrink-0" />
+                                            <span className="truncate font-semibold text-blue-600 dark:text-blue-400">
+                                                {task.distance < 1 ? '< 1 km' : `${task.distance.toFixed(1)} km`}
+                                            </span>
+                                        </>
+                                    )}
                                 </div>
                             </div>
 
@@ -119,7 +127,7 @@ export function TaskCard({ task, onClaim, onVerify, onMapClick, compact = false 
 
             {/* Desktop original view */}
             <div className="hidden md:block h-full">
-                <Card className="overflow-hidden group hover:shadow-md transition-all duration-300 border-border/40 h-full flex flex-col bg-white dark:bg-zinc-900/40">
+                <Card className="overflow-hidden group hover:shadow-xl transition-all duration-300 border-border/40 h-full flex flex-col bg-card/60 backdrop-blur-xl dark:bg-zinc-900/40 hover:-translate-y-1">
                     {!compact && (
                         <div className="h-28 bg-muted relative overflow-hidden border-b border-border/40">
                             <div className="absolute inset-0 opacity-10 bg-[url('https://upload.wikimedia.org/wikipedia/commons/e/ec/World_map_blank_without_borders.svg')] bg-cover bg-center mix-blend-luminosity filter dark:invert" />
@@ -165,6 +173,14 @@ export function TaskCard({ task, onClaim, onVerify, onMapClick, compact = false 
                                 <div className="mb-2 flex items-center gap-1.5 text-[11px] text-muted-foreground font-medium truncate">
                                     <MapPin className="h-3 w-3 text-red-500 shrink-0" />
                                     <span className="truncate">{task.location}</span>
+                                    {task.distance !== undefined && (
+                                        <>
+                                            <span className="w-1 h-1 rounded-full bg-muted-foreground/40 shrink-0" />
+                                            <span className="truncate font-semibold text-blue-600 dark:text-blue-400">
+                                                {task.distance < 1 ? '< 1 km' : `${task.distance.toFixed(1)} km`}
+                                            </span>
+                                        </>
+                                    )}
                                 </div>
                             )}
 

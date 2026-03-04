@@ -10,6 +10,7 @@ export interface Notification {
     type: "info" | "warning" | "success" | "error"
     read: boolean
     createdAt: number // timestamp for sorting/formatting
+    targetRole?: "citizen" | "collector" | "admin" // null or undefined means all roles
 }
 
 interface NotificationContextType {
@@ -33,7 +34,10 @@ export function useNotifications() {
     return context
 }
 
+import { useAuth } from "@/contexts/auth-context"
+
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
+    const { user } = useAuth()
     const [notifications, setNotifications] = useState<Notification[]>([])
     const [isLoading, setIsLoading] = useState(true)
 
@@ -49,16 +53,37 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
             }
         } else {
             // Optional: Add default welcome notification for new users
-            const welcome: Notification = {
-                id: Date.now().toString(),
-                title: "Welcome!",
-                message: "Welcome to Smart Waste Manager. Notifications will appear here.",
+            const welcomeCitizen: Notification = {
+                id: "welcome-citizen",
+                title: "Welcome to Citizen Dashboard!",
+                message: "Here you can report waste and track your collection schedule.",
                 time: "Just now",
                 type: "info",
                 read: false,
-                createdAt: Date.now()
+                createdAt: Date.now(),
+                targetRole: "citizen"
             }
-            setNotifications([welcome])
+            const welcomeAdmin: Notification = {
+                id: "welcome-admin",
+                title: "Admin Dashboard Ready",
+                message: "You can now manage users, tasks, and system settings.",
+                time: "Just now",
+                type: "info",
+                read: false,
+                createdAt: Date.now(),
+                targetRole: "admin"
+            }
+            const welcomeCollector: Notification = {
+                id: "welcome-collector",
+                title: "Collector Portal Active",
+                message: "Check your assigned tasks and update collection statuses.",
+                time: "Just now",
+                type: "info",
+                read: false,
+                createdAt: Date.now(),
+                targetRole: "collector"
+            }
+            setNotifications([welcomeCitizen, welcomeAdmin, welcomeCollector])
         }
         setIsLoading(false)
     }, [])
@@ -70,7 +95,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         }
     }, [notifications, isLoading])
 
-    const addNotification = (type: Notification["type"], title: string, message: string) => {
+    const addNotification = (type: Notification["type"], title: string, message: string, targetRole?: "citizen" | "collector" | "admin") => {
         const newNotification: Notification = {
             id: Date.now().toString(),
             title,
@@ -78,7 +103,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
             time: "Just now", // In a real app, use relative time library like date-fns
             type,
             read: false,
-            createdAt: Date.now()
+            createdAt: Date.now(),
+            targetRole
         }
         setNotifications(prev => [newNotification, ...prev])
     }
@@ -101,11 +127,16 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         setNotifications([])
     }
 
-    const unreadCount = notifications.filter(n => !n.read).length
+    // Filter notifications based on current user role
+    const filteredNotifications = notifications.filter(n =>
+        !n.targetRole || (user && n.targetRole === user.role)
+    )
+
+    const unreadCount = filteredNotifications.filter(n => !n.read).length
 
     return (
         <NotificationContext.Provider value={{
-            notifications,
+            notifications: filteredNotifications,
             unreadCount,
             isLoading,
             addNotification,

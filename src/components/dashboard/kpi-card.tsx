@@ -17,9 +17,9 @@ interface KpiCardProps {
 
 export function KpiCard({ title, value, icon: Icon, trend, className, description }: KpiCardProps) {
     return (
-        <Card className={cn("overflow-hidden relative group transition-all duration-300 border-border/40 shadow-sm hover:shadow-md bg-white dark:bg-zinc-900/40", className)}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 z-10 relative">
-                <CardTitle className="text-[13px] font-medium text-muted-foreground tracking-tight">
+        <Card className={cn("overflow-hidden relative group transition-all duration-300 border-border shadow-sm hover:shadow-md bg-card", className)}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 z-10 relative px-6 pt-6">
+                <CardTitle className="text-sm font-semibold text-muted-foreground tracking-tight">
                     {title}
                 </CardTitle>
                 <div className="p-1.5 bg-secondary/50 rounded-md text-muted-foreground group-hover:text-primary group-hover:bg-primary/10 transition-colors duration-300">

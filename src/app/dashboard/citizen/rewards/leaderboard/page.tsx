@@ -44,13 +44,13 @@ export default function LeaderboardPage() {
     return (
         <div className="space-y-6 sm:space-y-8 pb-24 sm:pb-10 px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col gap-1.5 pb-4 border-b border-border/40">
-                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
-                    <Trophy className="text-yellow-500 h-6 w-6 sm:h-8 sm:w-8 shrink-0" /> Green Citizens Leaderboard
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight bg-gradient-to-r from-yellow-500 to-amber-500 bg-clip-text text-transparent drop-shadow-sm flex items-center gap-2 w-fit">
+                    <Trophy className="text-yellow-500 h-6 w-6 sm:h-8 sm:w-8 shrink-0 drop-shadow-sm" /> Green Citizens Leaderboard
                 </h1>
                 <p className="text-[13px] sm:text-base font-medium text-muted-foreground mt-1">Top contributors to a cleaner city.</p>
             </div>
 
-            <Card className="rounded-[1.5rem] sm:rounded-[2rem] bg-transparent sm:bg-card border-none sm:border-solid shadow-none sm:shadow-lg overflow-hidden">
+            <Card className="rounded-[1.5rem] sm:rounded-[2rem] bg-card/60 backdrop-blur-xl border-none sm:border-solid border-white/10 dark:border-white/5 shadow-[0_10px_40px_-10px_rgba(234,179,8,0.15)] overflow-hidden transition-all duration-300 hover:shadow-[0_15px_50px_-10px_rgba(234,179,8,0.3)]">
                 {/* Decorative header background for desktop */}
                 <div className="hidden sm:block h-32 bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-transparent absolute top-0 left-0 right-0 pointer-events-none" />
 
@@ -62,7 +62,7 @@ export default function LeaderboardPage() {
                 <CardContent className="px-0 sm:px-8 pb-8 pt-0 relative">
                     <div className="space-y-3 sm:space-y-4">
                         {entries.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-12 text-center bg-muted/20 rounded-[1.5rem] border border-border/40">
+                            <div className="flex flex-col items-center justify-center py-12 text-center bg-muted/20 backdrop-blur-sm rounded-[1.5rem] border border-border/40">
                                 <Trophy className="h-10 w-10 text-muted-foreground/30 mb-3" />
                                 <p className="text-muted-foreground font-medium">No data available yet.</p>
                             </div>
@@ -70,10 +70,10 @@ export default function LeaderboardPage() {
                             entries.map((entry, index) => (
                                 <div
                                     key={entry._id}
-                                    className={`relative overflow-hidden flex items-center justify-between gap-4 p-4 sm:p-6 rounded-[1.25rem] sm:rounded-2xl border transition-all duration-300 hover:scale-[1.01] active:scale-[0.98] ${index === 0 ? 'bg-gradient-to-br from-yellow-50 to-amber-100/50 border-yellow-200 dark:from-yellow-900/20 dark:to-yellow-800/10 dark:border-yellow-700/50 shadow-[0_4px_20px_-4px_rgba(234,179,8,0.15)]' :
-                                        index === 1 ? 'bg-gradient-to-br from-zinc-50 to-slate-100/50 border-zinc-200 dark:from-zinc-800/40 dark:to-zinc-900/40 dark:border-zinc-700 shadow-sm' :
-                                            index === 2 ? 'bg-gradient-to-br from-orange-50 to-red-50/50 border-orange-200 dark:from-orange-900/20 dark:to-red-900/10 dark:border-orange-800/40 shadow-sm' :
-                                                'bg-card dark:bg-zinc-900/50 border-border/60 shadow-sm hover:shadow-md'
+                                    className={`relative overflow-hidden flex items-center justify-between gap-4 p-4 sm:p-6 rounded-[1.25rem] sm:rounded-2xl border transition-all duration-300 hover:-translate-y-1 group ${index === 0 ? 'bg-gradient-to-br from-yellow-50/90 to-amber-100/50 backdrop-blur-md border-yellow-200 dark:from-yellow-900/30 dark:to-yellow-800/10 dark:border-yellow-700/50 shadow-[0_10px_30px_-5px_rgba(234,179,8,0.3)] hover:shadow-[0_20px_40px_-10px_rgba(234,179,8,0.5)] z-10' :
+                                        index === 1 ? 'bg-gradient-to-br from-zinc-50/90 to-slate-100/50 backdrop-blur-md border-zinc-200 dark:from-zinc-800/50 dark:to-zinc-900/40 dark:border-zinc-700 shadow-sm hover:shadow-md' :
+                                            index === 2 ? 'bg-gradient-to-br from-orange-50/90 to-red-50/50 backdrop-blur-md border-orange-200 dark:from-orange-900/30 dark:to-red-900/10 dark:border-orange-800/40 shadow-sm hover:shadow-md' :
+                                                'bg-card/70 backdrop-blur-sm dark:bg-zinc-900/50 border-white/10 dark:border-white/5 shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)]'
                                         }`}
                                 >
                                     {/* Subtle shine effect for #1 */}
@@ -114,7 +114,7 @@ export default function LeaderboardPage() {
                                     <div className={`flex items-center gap-1.5 sm:gap-2 shrink-0 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border relative z-10 ${index === 0 ? 'bg-yellow-500 text-white border-yellow-600 shadow-md' :
                                         'bg-emerald-100 dark:bg-emerald-500/20 border-emerald-200 dark:border-emerald-500/30'
                                         }`}>
-                                        <Award className={`h-4 w-4 sm:h-5 sm:w-5 ${index === 0 ? 'text-yellow-100' : 'text-emerald-600 dark:text-emerald-500'}`} />
+                                        <Award className={`h-4 w-4 sm:h-5 sm:w-5 transition-transform duration-300 group-hover:scale-110 ${index === 0 ? 'text-yellow-100' : 'text-emerald-600 dark:text-emerald-500'}`} />
                                         <span className={`text-sm sm:text-lg font-black ${index === 0 ? 'text-white' : 'text-emerald-700 dark:text-emerald-400'}`}>
                                             {entry.points}
                                         </span>

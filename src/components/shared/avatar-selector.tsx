@@ -48,43 +48,31 @@ export function AvatarSelector({ currentAvatarId, onAvatarSelect }: AvatarSelect
                 />
             )}
 
-            <div className="w-full flex flex-col items-center gap-6 max-w-sm mx-auto">
-                <div className="relative group">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 sm:gap-8 w-full">
+                <div className="relative group shrink-0">
                     <UserAvatar
                         avatarId={currentAvatarId}
                         fallbackName="U"
-                        className="h-24 w-24 sm:h-28 sm:w-28 shadow-lg ring-4 ring-background transition-all group-hover:opacity-80 group-hover:scale-[1.02]"
-                        iconClassName="h-10 w-10 sm:h-12 sm:w-12"
+                        className="h-24 w-24 sm:h-28 sm:w-28 border border-border/50 shadow-sm ring-4 ring-background transition-all group-hover:opacity-80 group-hover:scale-[1.02] bg-muted/20"
+                        iconClassName="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground"
                     />
 
-                    {/* Upload Button overlay on hover */}
+                    {/* Upload Overlay on Hover */}
                     <div
-                        className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-0"
+                        className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 rounded-[1.25rem] opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10"
                         onClick={() => fileInputRef.current?.click()}
                     >
-                        <Upload className="h-8 w-8 text-white" />
+                        <Upload className="h-6 w-6 text-white mb-1" />
+                        <span className="text-[10px] font-semibold text-white">Upload</span>
                     </div>
-
-                    {currentAvatarId && (
-                        <button
-                            type="button"
-                            onClick={(e) => {
-                                e.stopPropagation()
-                                onAvatarSelect("")
-                                if (fileInputRef.current) fileInputRef.current.value = ""
-                            }}
-                            className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1.5 shadow-md hover:bg-red-600 transition-transform hover:scale-105 active:scale-95 z-10"
-                            title="Remove Avatar"
-                        >
-                            <X className="h-4 w-4" />
-                        </button>
-                    )}
                 </div>
 
-                <div className="w-full space-y-2 text-center">
-                    <div className="mb-2">
-                        <p className="text-sm font-bold text-foreground">Profile Picture</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">Upload a photo to represent you.</p>
+                <div className="flex flex-col items-center sm:items-start space-y-3 mt-1 text-center sm:text-left">
+                    <div>
+                        <p className="text-sm font-semibold text-foreground">Profile Picture</p>
+                        <p className="text-[13px] text-muted-foreground mt-1 max-w-sm">
+                            We recommend an image of at least 300x300. You can upload a PNG, JPG, or WebP.
+                        </p>
                     </div>
 
                     <input
@@ -95,15 +83,32 @@ export function AvatarSelector({ currentAvatarId, onAvatarSelect }: AvatarSelect
                         onChange={handleFileChange}
                     />
 
-                    <Button
-                        type="button"
-                        variant="outline"
-                        className="w-full max-w-[200px] mx-auto rounded-xl border-border/60 bg-white dark:bg-zinc-900 shadow-sm transition-all active:scale-[0.98]"
-                        onClick={() => fileInputRef.current?.click()}
-                    >
-                        <ImageIcon className="mr-2 h-4 w-4" />
-                        {currentAvatarId ? "Change Picture" : "Upload Picture"}
-                    </Button>
+                    <div className="flex items-center gap-3 pt-1">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="h-9 px-4 rounded-md border-border/60 bg-white dark:bg-zinc-900 shadow-sm transition-all text-[13px] font-medium"
+                            onClick={() => fileInputRef.current?.click()}
+                        >
+                            <ImageIcon className="mr-2 h-4 w-4 text-muted-foreground" />
+                            {currentAvatarId ? "Change photo" : "Upload photo"}
+                        </Button>
+
+                        {currentAvatarId && (
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                className="h-9 px-3 rounded-md text-destructive hover:bg-destructive/10 hover:text-destructive text-[13px] font-medium"
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    onAvatarSelect("")
+                                    if (fileInputRef.current) fileInputRef.current.value = ""
+                                }}
+                            >
+                                Remove
+                            </Button>
+                        )}
+                    </div>
                 </div>
             </div>
         </>

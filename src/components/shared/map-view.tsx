@@ -27,47 +27,59 @@ function MapUpdater({ center, zoom }: { center: [number, number]; zoom: number }
     return null
 }
 
-function LocationButton() {
+function LocationButton({ userLocation }: { userLocation?: [number, number] | null }) {
     const map = useMap()
 
     const handleLocate = () => {
-        map.locate().on("locationfound", function (e) {
-            map.flyTo(e.latlng, map.getZoom())
-        })
+        if (userLocation) {
+            map.flyTo(userLocation, 16, {
+                animate: true,
+                duration: 1.5
+            });
+        } else {
+            map.locate().on("locationfound", function (e) {
+                map.flyTo(e.latlng, 16, {
+                    animate: true,
+                    duration: 1.5
+                });
+            }).on("locationerror", function () {
+                import("react-hot-toast").then((module) => {
+                    module.default.error("Location access denied or unavailable.");
+                });
+            });
+        }
     }
 
     return (
-        <div className="leaflet-bottom leaflet-right">
-            <div className="leaflet-control leaflet-bar">
-                <a
-                    href="#"
-                    className="leaflet-control-zoom-in"
+        <div className="leaflet-bottom leaflet-right" style={{ marginBottom: '20px', marginRight: '10px' }}>
+            <div className="leaflet-control">
+                <button
                     title="Locate me"
-                    role="button"
                     onClick={(e) => {
                         e.preventDefault()
                         handleLocate()
                     }}
+                    className="hover:bg-gray-50 focus:outline-none active:scale-95 transition-all"
                     style={{
-                        width: '36px',
-                        height: '36px',
+                        width: '44px',
+                        height: '44px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         backgroundColor: 'white',
                         cursor: 'pointer',
-                        borderRadius: '8px',
-                        boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
-                        border: '1px solid rgba(0,0,0,0.05)',
-                        color: 'black'
+                        borderRadius: '50%',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                        border: '2px solid rgba(0,0,0,0.05)',
+                        color: '#2563eb'
                     }}
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <circle cx="12" cy="12" r="10" />
                         <line x1="12" y1="2" x2="12" y2="22" />
                         <line x1="2" y1="12" x2="22" y2="12" />
                     </svg>
-                </a>
+                </button>
             </div>
         </div>
     )
@@ -127,8 +139,8 @@ export default function MapView({ tasks, focusedTaskId, onClaimTask, onCompleteT
                 className="map-tiles"
             />
             <MapUpdater center={center} zoom={zoom} />
-            <LocationButton />
-            
+            <LocationButton userLocation={userLocation} />
+
             {userLocation && (
                 <Marker
                     position={userLocation}

@@ -67,7 +67,7 @@ export function BottomSheet({ isOpen, onClose, children, title }: BottomSheetPro
 
                         {/* Content */}
                         <div
-                            className="px-6 pb-8 overflow-y-auto overscroll-contain flex-1 pointer-events-auto"
+                            className="px-6 pb-24 overflow-y-auto overscroll-contain flex-1 pointer-events-auto"
                             onPointerDownCapture={(e) => e.stopPropagation()}
                         >
                             {children}

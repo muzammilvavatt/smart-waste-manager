@@ -13,6 +13,7 @@ import { CheckCircle, Clock, TrendingUp, Loader2, Search, LogOut, RefreshCw } fr
 import { motion, AnimatePresence } from "framer-motion"
 import { UserAvatar } from "@/components/shared/user-avatar"
 import toast from "react-hot-toast"
+import { PageHeader } from "@/components/dashboard/page-header"
 
 export default function CollectorDashboard() {
     const { user, logout } = useAuth()
@@ -85,50 +86,32 @@ export default function CollectorDashboard() {
             animate="show"
             variants={containerVariants}
         >
-            {/* App-like Header for Mobile */}
-            <div className="md:hidden flex items-center justify-between pb-4">
-                <div className="flex items-center gap-3">
-                    <UserAvatar
-                        avatarId={user?.profileImage}
-                        fallbackName={user?.name || "U"}
-                        className="h-11 w-11 rounded-[1rem] shadow-sm border border-emerald-500/20"
-                        iconClassName="h-5 w-5"
-                    />
-                    <div>
-                        <p className="text-[12px] font-semibold text-muted-foreground tracking-tight uppercase">
-                            Collector Hub
-                        </p>
-                        <h1 className="text-xl font-bold tracking-tight text-foreground leading-tight">{user?.name}</h1>
-                    </div>
-                </div>
-                <Button variant="ghost" size="icon" onClick={() => logout()} className="text-muted-foreground bg-muted/30 rounded-full h-9 w-9">
-                    <LogOut className="h-4 w-4 text-red-500" />
-                </Button>
-            </div>
-
-            <div className="hidden md:flex flex-col gap-1.5 pb-2 border-b border-border/40">
-                <h1 className="text-3xl font-bold tracking-tight text-foreground">Collector Hub</h1>
-                <p className="text-muted-foreground text-sm font-medium">Manage your routes and verify collections.</p>
-            </div>
+            <PageHeader
+                title="Collector Hub"
+                description="Manage your routes and verify collections."
+                user={user}
+                onLogout={logout}
+                roleLabel="Collector"
+            />
 
             {/* Stats Overview */}
-            <motion.div variants={itemVariants} className="flex overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-3 sm:gap-6 gap-3 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                <div className="min-w-[85vw] sm:min-w-0 snap-center">
+            <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+                <div className="w-full">
                     <KpiCard
                         title="Total Collections"
                         value={stats.totalCollections}
                         icon={CheckCircle}
                         description="Lifetime completed tasks"
-                        className="rounded-2xl"
+                        className="rounded-2xl bg-card/60 backdrop-blur-xl border-border/40 hover:bg-card/80 transition-all hover:-translate-y-1 hover:shadow-lg hover:shadow-emerald-500/10"
                     />
                 </div>
-                <div className="min-w-[85vw] sm:min-w-0 snap-center">
+                <div className="w-full">
                     <KpiCard
                         title="Pending Tasks"
                         value={stats.pendingCollections}
                         icon={Clock}
                         description="Tasks waiting for action"
-                        className="rounded-2xl"
+                        className="rounded-2xl bg-card/60 backdrop-blur-xl border-border/40 hover:bg-card/80 transition-all hover:-translate-y-1 hover:shadow-lg hover:shadow-blue-500/10"
                         trend={{
                             value: stats.pendingCollections * 2, // arbitrary trend for visual
                             label: stats.pendingCollections > 5 ? 'High Demand' : 'Normal Load',
@@ -136,13 +119,13 @@ export default function CollectorDashboard() {
                         }}
                     />
                 </div>
-                <div className="min-w-[85vw] sm:min-w-0 snap-center">
+                <div className="w-full">
                     <KpiCard
                         title="Today's Verified"
                         value={stats.todayCollections}
                         icon={TrendingUp}
                         description="Collections verified today"
-                        className="rounded-2xl"
+                        className="rounded-2xl bg-card/60 backdrop-blur-xl border-border/40 hover:bg-card/80 transition-all hover:-translate-y-1 hover:shadow-lg hover:shadow-teal-500/10"
                         trend={{
                             value: 12,
                             label: "vs yesterday",

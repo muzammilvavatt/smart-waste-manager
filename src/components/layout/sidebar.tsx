@@ -38,6 +38,7 @@ export const Sidebar = memo(function Sidebar() {
     const collectorLinks = [
         { href: "/dashboard/collector", label: "Tasks", icon: LayoutDashboard },
         { href: "/dashboard/collector/map", label: "Map View", icon: Map },
+        { href: "/dashboard/collector/settings", label: "Settings", icon: Settings },
     ]
 
     const adminLinks = [

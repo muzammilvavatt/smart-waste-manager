@@ -1,18 +1,31 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, useMemo } from "react"
 import { getTasks } from "@/lib/store"
 import { CollectionTask } from "@/types"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { motion } from "framer-motion"
+import useSWR from 'swr'
 // ... imports
 import { Trash2, Loader2, RefreshCw, Search, Filter } from "lucide-react"
 import toast from "react-hot-toast"
 import { DeleteConfirmationDialog } from "@/components/shared/delete-confirmation-dialog"
 
 export default function AdminTasksPage() {
-    const [tasks, setTasks] = useState<CollectionTask[]>([])
-    const [loading, setLoading] = useState(true)
     const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set())
+
+    const fetcher = async () => {
+        const data = await getTasks('admin');
+        return Array.isArray(data) ? data : [];
+    };
+
+    const { data: tasks = [], isLoading: loading, mutate } = useSWR<CollectionTask[]>(
+        'admin-tasks',
+        fetcher,
+        {
+            revalidateOnFocus: false,
+        }
+    );
 
     const [deleteModalOpen, setDeleteModalOpen] = useState(false)
     const [taskToDelete, setTaskToDelete] = useState<string | null>(null)
@@ -23,10 +36,6 @@ export default function AdminTasksPage() {
     const [statusFilter, setStatusFilter] = useState("all")
 
     const containerRef = useRef<HTMLDivElement>(null)
-
-    useEffect(() => {
-        loadTasks()
-    }, [])
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -54,18 +63,9 @@ export default function AdminTasksPage() {
         }
     }, [selectedTaskIds, deleteModalOpen])
 
-    const loadTasks = () => {
-        setLoading(true)
-        getTasks('admin').then((data) => {
-            setTasks(Array.isArray(data) ? data : [])
-            setSelectedTaskIds(new Set()) // Reset selection on reload
-        }).catch((e) => {
-            console.error(e)
-            setTasks([])
-            toast.error("Failed to load tasks")
-        }).finally(() => {
-            setLoading(false)
-        })
+    const loadTasks = async () => {
+        await mutate()
+        setSelectedTaskIds(new Set())
     }
 
     const handleDeleteClick = (taskId: string) => {
@@ -79,24 +79,26 @@ export default function AdminTasksPage() {
         setDeleteModalOpen(true)
     }
 
-    // Derived filtered tasks
-    const filteredTasks = tasks.filter(task => {
-        const matchesSearch = task.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            task.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (task.collectorId && task.collectorId.toLowerCase().includes(searchTerm.toLowerCase()));
+    // Derived filtered tasks, memoized for performance
+    const filteredTasks = useMemo(() => {
+        return tasks.filter(task => {
+            const matchesSearch = task.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                task.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (task.collectorId && task.collectorId.toLowerCase().includes(searchTerm.toLowerCase()));
 
-        if (statusFilter === "all") return matchesSearch;
+            if (statusFilter === "all") return matchesSearch;
 
-        // Group statuses for simpler filtering
-        if (statusFilter === "completed") {
-            return matchesSearch && (task.status === "collected" || task.status === "verified");
-        }
-        if (statusFilter === "pending") {
-            return matchesSearch && (task.status === "pending" || task.status === "in-progress");
-        }
+            // Group statuses for simpler filtering
+            if (statusFilter === "completed") {
+                return matchesSearch && (task.status === "collected" || task.status === "verified");
+            }
+            if (statusFilter === "pending") {
+                return matchesSearch && (task.status === "pending" || task.status === "in-progress");
+            }
 
-        return matchesSearch && task.status === statusFilter;
-    });
+            return matchesSearch && task.status === statusFilter;
+        });
+    }, [tasks, searchTerm, statusFilter]);
 
     const toggleSelectAll = () => {
         if (selectedTaskIds.size === filteredTasks.length && filteredTasks.length > 0) {
@@ -163,7 +165,7 @@ export default function AdminTasksPage() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 animate-in fade-in duration-500">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-50">Task Management</h1>
 
@@ -195,7 +197,7 @@ export default function AdminTasksPage() {
                 </div>
             </div>
 
-            <Card ref={containerRef} className="border-none shadow-none md:border-solid md:shadow-sm bg-transparent md:bg-card">
+            <Card ref={containerRef} className="border-none shadow-none md:border-solid md:shadow-sm md:bg-card/60 md:backdrop-blur-xl md:border-border/40">
                 <CardHeader className="flex flex-row items-center justify-between px-0 md:px-6 pb-2 md:pb-6 sticky top-0 z-30 bg-background/90 backdrop-blur-xl md:bg-transparent md:backdrop-blur-none md:static">
                     <CardTitle className="text-xl md:text-2xl">All Waste Reports</CardTitle>
                     {selectedTaskIds.size > 0 && (
@@ -237,15 +239,18 @@ export default function AdminTasksPage() {
                                     />
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 pb-20 md:pb-6">
-                                    {filteredTasks.map(task => {
+                                    {filteredTasks.map((task, index) => {
                                         const isSelected = selectedTaskIds.has(task.id);
                                         const isCompleted = task.status === 'collected' || task.status === 'verified';
 
                                         return (
-                                            <div
+                                            <motion.div
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: index * 0.03, type: 'spring', stiffness: 300, damping: 24 }}
                                                 key={task.id}
                                                 className={`relative flex flex-col justify-between p-3.5 md:p-4 md:pt-5 rounded-xl md:rounded-2xl transition-all duration-200 
-                                                    ${isSelected ? 'bg-blue-50/80 border-blue-200 dark:bg-blue-900/30 dark:border-blue-800 ring-1 ring-blue-500/20' : 'bg-background shadow-sm border border-border/40 hover:shadow-md hover:border-emerald-500/30 dark:bg-card'}
+                                                    ${isSelected ? 'bg-blue-50/80 border-blue-200 dark:bg-blue-900/40 dark:border-blue-800 ring-1 ring-blue-500/20' : 'bg-background/80 md:bg-card/60 backdrop-blur-md shadow-sm border border-border/40 hover:shadow-md hover:border-emerald-500/30'}
                                                     overflow-hidden group cursor-pointer
                                                 `}
                                                 onClick={(e) => {
@@ -305,7 +310,7 @@ export default function AdminTasksPage() {
                                                         <Trash2 className="h-3.5 w-3.5 md:h-4 md:w-4" />
                                                     </button>
                                                 </div>
-                                            </div>
+                                            </motion.div>
                                         )
                                     })}
                                 </div>

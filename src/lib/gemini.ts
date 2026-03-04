@@ -119,7 +119,56 @@ Analyze the image now:`
         }
     }
 }
-// Real AI-powered collection verification
+// Helper to fetch an image URL and convert to GenerativePart
+async function urlToGenerativePart(url: string, mimeType = "image/jpeg"): Promise<{ inlineData: { data: string; mimeType: string } } | null> {
+    try {
+        // If it's a data URL, extract base64 directly
+        if (url.startsWith('data:')) {
+            const arr = url.split(',');
+            const match = arr[0].match(/:(.*?);/);
+            const mType = match ? match[1] : mimeType;
+            const b64 = arr[1];
+            return {
+                inlineData: {
+                    data: b64,
+                    mimeType: mType
+                }
+            };
+        }
+
+        // Handle path-based placeholders (e.g. /placeholder-waste.jpg)
+        // If relative URL, we might need a full URL to fetch it server-side,
+        // but since this is called from the frontend/API, local fetching can fail.
+        // We'll attempt fetching if it's absolute.
+        if (!url.startsWith('http')) {
+            console.warn("urlToGenerativePart: Cannot fetch relative URL directly without base URL. Falling back to single image verification.");
+            return null;
+        }
+
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch image: ${response.statusText}`);
+        }
+        const blob = await response.blob();
+
+        // Convert blob to base64
+        const arrayBuffer = await blob.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        const base64Data = buffer.toString('base64');
+
+        return {
+            inlineData: {
+                data: base64Data,
+                mimeType: blob.type || mimeType
+            }
+        };
+    } catch (error) {
+        console.error("urlToGenerativePart error:", error);
+        return null; // Return null gracefully, fallback to single image
+    }
+}
+
+// Real AI-powered collection verification with Before vs After comparison
 export async function verifyCollection(reportImageUrl: string, proofFile: File): Promise<WasteVerificationResult> {
     try {
         const genAI = getGeminiClient()
@@ -128,15 +177,55 @@ export async function verifyCollection(reportImageUrl: string, proofFile: File):
         // Convert proof image to format Gemini can process
         const proofPart = await fileToGenerativePart(proofFile)
 
-        // Prompt for collection verification
-        const prompt = `You are an expert waste collection verification system. 
-        I am providing you with a "Proof of Collection" image.
+        // Attempt to fetch the original image
+        const originalPart = await urlToGenerativePart(reportImageUrl);
+
+        let parts: any[] = [];
+        let prompt = "";
+
+        if (originalPart) {
+            // We have both images for comparison
+            prompt = `You are an expert waste collection verification AI. 
+        I am providing you with TWO images.
+        Image 1 (first provided): The original "Before" photo showing the waste reported by a citizen.
+        Image 2 (second provided): The "After" Proof of Collection photo uploaded by the collector.
+        
+        YOUR TASK:
+        Verify if the collector has successfully cleaned the exact area shown in the first photo.
+        
+        CRITICAL CHECKS:
+        1. LOCATION MATCH: Analyze the background, ground texture, walls, and surrounding environment. Are both photos taken in the EXACT same location?
+        2. WASTE REMOVAL: Has the waste shown in Image 1 been physically removed or collected in Image 2?
+
+        Valid evidence of collection:
+        - The specific area shown in Image 1 is now clean/empty in Image 2.
+        - The background matches perfectly, but the waste is gone.
+        - You clearly see the waste being loaded into a collection truck or bin at that location.
+
+        REJECT the proof if:
+        - The locations clearly do not match (e.g., different street, different room).
+        - The waste is still present and untouched.
+        - The proof image is just a random photo of a truck with no geographic context tying it to Image 1.
+
+        RESPOND in this EXACT JSON format:
+        {
+          "category": "verified" | "rejected",
+          "confidence": 0.0-1.0,
+          "message": "Start with [LOCATION MATCH] or [LOCATION MISMATCH]. Then briefly explain if the waste was removed."
+        }
+
+        Analyze the images now:`;
+            parts = [prompt, originalPart, proofPart];
+        } else {
+            // Fallback: Verify just the proof image if original image couldn't be loaded (e.g., local placeholder during dev)
+            prompt = `You are an expert waste collection verification system. 
+        I am providing you with a single "Proof of Collection" image. (The original image was unavailable for comparison).
         
         YOUR TASK:
         Verify if this image shows evidence that waste has been collected. 
         
         CRITICAL INSTRUCTION FOR DEMO PURPOSES:
-        You must accept "Cleanliness" as proof. If the looks clean, tidy, or empty of waste, it means the collection was successful.
+        You must accept "Cleanliness" as proof. If the area looks clean, tidy, or empty of waste, it means the collection was successful.
 
         Valid evidence includes:
         1. A clean street, empty floor, or tidy area (Primary Evidence).
@@ -151,12 +240,14 @@ export async function verifyCollection(reportImageUrl: string, proofFile: File):
         {
           "category": "verified" | "rejected",
           "confidence": 0.0-1.0,
-          "message": "Brief explanation of what you see and why you verified/rejected it"
+          "message": "Brief explanation of what you see and why you verified/rejected it (Single image mode)"
         }
 
-        Analyze the proof image now:`
+        Analyze the proof image now:`;
+            parts = [prompt, proofPart];
+        }
 
-        const result = await model.generateContent([prompt, proofPart])
+        const result = await model.generateContent(parts)
         const response = await result.response
         const text = response.text()
 
@@ -206,22 +297,27 @@ export async function generateAdminSummary(stats: any): Promise<string> {
             recentTrend: stats.weeklyStats?.slice(-2) // Last 2 days to compare
         });
 
-        const prompt = `You are an expert City Waste Management Analyst.
+        const prompt = `You are an expert City Waste Management Analyst and Chief Security Officer.
         I am providing you with the real-time statistics of our Smart Waste Management system.
         
         CURRENT STATS:
         ${statsSummary}
         
         YOUR TASK:
-        Write a concise, 2-3 sentence strategic summary for the City Administrator.
+        Write a concise, 3-4 sentence strategic summary for the City Administrator.
+        
+        CRITICAL FOCUS AREAS:
+        1. Operational Health: Highlight the most pressing issue (e.g., high pending tasks vs low collectors).
+        2. Security & Fraud Prevention: Analyze the stats or recent trends for potential scams, system exposure, or fraudulent collector/citizen behaviors (e.g., unusually high completion rates, suspected staging of waste).
+        3. System Integrity: Provide one actionable recommendation to make the system harder to exploit.
         
         GUIDELINES:
-        - Keep it brief, professional, and actionable.
-        - Highlight the most pressing issue (e.g., high pending tasks vs low collectors).
+        - Keep it brief, professional, and highly actionable.
         - Mention the most common waste type if relevant.
+        - Provide stern warnings if metrics look highly irregular or suggestive of gaming the system.
         - Do NOT use bullet points or markdown. Just plain text.
         
-        Example: "We currently have 45 pending tasks but only 2 active collectors, indicating a severe bottleneck in operations. Plastic remains the dominant waste type. Consider onboarding more collectors in the affected zones immediately."
+        Example: "We currently have 45 pending tasks but only 2 active collectors, indicating a severe bottleneck in operations. Plastic remains the dominant waste type. There is a suspicious spike in rapidly completed tasks in Zone B, suggesting potential fraudulent 'ghost collections'. Consider implementing stricter GPS geo-fencing and mandatory multi-angle photo verification to prevent system exploitation."
         
         Write the summary now:`
 

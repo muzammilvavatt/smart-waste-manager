@@ -51,7 +51,20 @@ function CollectorMapContent() {
     } = useCollectionTasks(user, 'all') // Fetch ALL tasks for the map
 
     const [showNearby, setShowNearby] = useState(false)
-    const [userLocation, setUserLocation] = useState<[number, number] | null>(null)
+    const [userLocation, setUserLocation] = useState<[number, number] | null>(() => {
+        // Try to load cached location to prevent loading screen when navigating back
+        if (typeof window !== 'undefined') {
+            const cached = sessionStorage.getItem('collector-location')
+            if (cached) return JSON.parse(cached)
+        }
+        return null
+    })
+    const [locationStatus, setLocationStatus] = useState<'loading' | 'granted' | 'denied'>(() => {
+        if (typeof window !== 'undefined' && sessionStorage.getItem('collector-location')) {
+            return 'granted'
+        }
+        return 'loading'
+    })
     const searchParams = useSearchParams()
     const router = useRouter()
 
@@ -66,11 +79,15 @@ function CollectorMapContent() {
         if ("geolocation" in navigator) {
             watchId = navigator.geolocation.watchPosition(
                 (position) => {
-                    setUserLocation([position.coords.latitude, position.coords.longitude])
+                    const loc = [position.coords.latitude, position.coords.longitude] as [number, number];
+                    setUserLocation(loc)
+                    setLocationStatus('granted')
+                    sessionStorage.setItem('collector-location', JSON.stringify(loc))
                 },
                 (error) => {
                     console.log("Geolocation error:", error)
-                    setUserLocation(prev => prev || DEFAULT_MAP_CENTER)
+                    setUserLocation(null)
+                    setLocationStatus('denied')
                 },
                 {
                     enableHighAccuracy: true,
@@ -79,7 +96,8 @@ function CollectorMapContent() {
                 }
             )
         } else {
-            setUserLocation(DEFAULT_MAP_CENTER)
+            setUserLocation(null)
+            setLocationStatus('denied')
         }
 
         return () => {
@@ -146,6 +164,64 @@ function CollectorMapContent() {
 
     const [isMinimized, setIsMinimized] = useState(false)
 
+    if (locationStatus === 'loading') {
+        return (
+            <div className="flex flex-col h-[calc(100vh-8rem)] min-h-[500px] w-full items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-xl border border-border/40 p-6 relative">
+                {/* Back Button for mobile context */}
+                <div className="absolute top-4 left-4 z-[1001] md:hidden">
+                    <Button variant="secondary" size="icon" onClick={() => router.back()} className="rounded-full shadow-lg">
+                        <ArrowLeft className="h-4 w-4" />
+                    </Button>
+                </div>
+
+                <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-4" />
+                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">Getting your location...</h3>
+                <p className="text-gray-500 text-sm text-center max-w-sm font-medium">
+                    We need your location to show nearby active collections and calculate optimal routes.
+                </p>
+            </div>
+        )
+    }
+
+    if (locationStatus === 'denied') {
+        return (
+            <div className="flex flex-col h-[calc(100vh-8rem)] min-h-[500px] w-full items-center justify-center bg-white dark:bg-gray-800 rounded-xl border border-border/40 p-6 relative">
+                {/* Back Button for mobile context */}
+                <div className="absolute top-4 left-4 z-[1001] md:hidden">
+                    <Button variant="secondary" size="icon" onClick={() => router.back()} className="rounded-full shadow-lg border border-gray-200">
+                        <ArrowLeft className="h-4 w-4" />
+                    </Button>
+                </div>
+
+                <div className="w-16 h-16 bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mb-5 shadow-sm">
+                    <MapPin className="h-8 w-8" />
+                </div>
+                <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100 tracking-tight text-center">Location Access Required</h3>
+                <p className="text-gray-500 dark:text-gray-400 text-center max-w-sm mb-6 text-sm font-medium leading-relaxed">
+                    You must enable location services in your browser's site settings to view the Collector Map. We use this to calculate distances to nearby tasks correctly.
+                </p>
+                <div className="flex gap-3 w-full max-w-xs">
+                    <Button
+                        variant="outline"
+                        onClick={() => router.back()}
+                        className="flex-1 border-gray-200 text-gray-700 bg-gray-50 hover:bg-gray-100 shadow-sm font-bold active:scale-95 transition-all"
+                    >
+                        Go Back
+                    </Button>
+                    <Button
+                        onClick={() => {
+                            setLocationStatus('loading')
+                            window.location.reload()
+                        }}
+                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-md active:scale-95 transition-all"
+                    >
+                        I enabled it
+                    </Button>
+                </div>
+            </div>
+        )
+    }
+
     return (
         <div className="flex flex-col h-[calc(100vh-8rem)] min-h-[500px] w-full relative rounded-xl overflow-hidden border bg-gray-100 dark:bg-gray-800">
             {/* Back Button for mobile/embedded context */}
@@ -199,7 +275,7 @@ function CollectorMapContent() {
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: -10 }}
                         transition={{ duration: 0.1, ease: "easeInOut" }}
-                        className="absolute top-4 right-4 w-80 bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-xl dark:bg-gray-900/95 z-[1000] max-h-[60vh] flex flex-col border border-gray-200 dark:border-gray-700 hidden md:flex"
+                        className="absolute top-4 right-4 w-80 bg-card/80 backdrop-blur-2xl p-4 rounded-xl shadow-xl z-[1000] max-h-[60vh] flex flex-col border border-border/40 hidden md:flex"
                     >
                         <div
                             onPointerDown={(e) => dragControls.start(e)}

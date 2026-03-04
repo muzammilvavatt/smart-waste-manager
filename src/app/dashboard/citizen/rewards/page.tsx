@@ -699,7 +699,7 @@ export default function RewardsPage() {
     }
 
     return (
-        <div className="space-y-6 sm:space-y-8 pb-24 sm:pb-10 px-4 sm:px-6 lg:px-8">
+        <div className="space-y-6 sm:space-y-8 pb-24 sm:pb-10 px-4 sm:px-6 lg:px-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sm:gap-6 border-b border-border/40 pb-4 sm:pb-6">
                 <div>
                     <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Rewards Store</h1>

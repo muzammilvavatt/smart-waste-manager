@@ -9,11 +9,12 @@ import { Input } from "@/components/ui/input"
 import { Trash, Edit, X, Check, Plus, AlertTriangle, Search, Filter, User as UserIcon } from "lucide-react"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { UserAvatar } from "@/components/shared/user-avatar"
+import { motion } from "framer-motion"
+import useSWR from 'swr'
 
 import toast from "react-hot-toast"
 
 export default function UsersPage() {
-    const [users, setUsers] = useState<User[]>([])
     const [loading, setLoading] = useState(false)
     const [editingUser, setEditingUser] = useState<User | null>(null)
     const [editRole, setEditRole] = useState<User['role']>('citizen')
@@ -29,20 +30,20 @@ export default function UsersPage() {
     const [searchTerm, setSearchTerm] = useState('')
     const [roleFilter, setRoleFilter] = useState<User['role'] | 'all'>('all')
 
-    const loadUsers = async () => {
-        try {
-            const data = await getAllUsers()
-            setUsers(Array.isArray(data) ? data : [])
-        } catch (e) {
-            console.error(e)
-            setUsers([])
-            toast.error("Failed to fetch users")
-        }
-    }
+    const fetcher = async () => {
+        const data = await getAllUsers();
+        return Array.isArray(data) ? data : [];
+    };
 
-    useEffect(() => {
-        loadUsers()
-    }, [])
+    const { data: users = [], isLoading: isFetching, mutate } = useSWR<User[]>(
+        'admin-users',
+        fetcher,
+        { revalidateOnFocus: false }
+    );
+
+    const loadUsers = async () => {
+        await mutate();
+    }
 
     const handleDeleteClick = (userId: string, userName: string) => {
         setUserToDelete({ id: userId, name: userName })
@@ -123,7 +124,7 @@ export default function UsersPage() {
     })
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-50">User Management</h1>
                 <div className="flex flex-col sm:flex-row gap-3">
@@ -157,14 +158,17 @@ export default function UsersPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-                {filteredUsers.map(user => {
+                {filteredUsers.map((user, index) => {
                     const isEditing = editingUser?.id === user.id;
 
                     return (
-                        <div
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.05, type: 'spring', stiffness: 300, damping: 24 }}
                             key={user.id}
-                            className={`relative flex flex-col bg-card rounded-xl border border-border/40 shadow-sm overflow-hidden transition-all duration-200
-                                ${isEditing ? 'ring-2 ring-emerald-500/50' : 'hover:shadow-md hover:border-emerald-500/20'}
+                            className={`relative flex flex-col bg-card/60 backdrop-blur-md rounded-xl border border-border/40 shadow-sm overflow-hidden transition-all duration-200
+                                ${isEditing ? 'ring-2 ring-emerald-500/50 bg-card/80' : 'hover:shadow-md hover:border-emerald-500/20 hover:-translate-y-1 hover:bg-card/80'}
                             `}
                         >
                             {/* Role Indicator Edge */}
@@ -217,23 +221,25 @@ export default function UsersPage() {
                                                 <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Email</label>
                                                 <Input value={editEmail} onChange={(e) => setEditEmail(e.target.value)} className="h-8 text-sm" />
                                             </div>
-                                            <div className="grid grid-cols-2 gap-2">
+                                            <div className={`grid ${editRole === 'citizen' ? 'grid-cols-2' : 'grid-cols-1'} gap-2`}>
                                                 <div className="space-y-1">
                                                     <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Role</label>
                                                     <select
                                                         value={editRole}
                                                         onChange={(e) => setEditRole(e.target.value as User['role'])}
-                                                        className="w-full h-8 px-2 text-sm rounded-md border border-input bg-background"
+                                                        className="w-full h-8 px-2 text-sm rounded-md border border-input bg-background/50 backdrop-blur-sm"
                                                     >
                                                         <option value="citizen">Citizen</option>
                                                         <option value="collector">Collector</option>
                                                         <option value="admin">Admin</option>
                                                     </select>
                                                 </div>
-                                                <div className="space-y-1">
-                                                    <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Points</label>
-                                                    <Input type="number" value={editPoints} onChange={(e) => setEditPoints(parseInt(e.target.value) || 0)} className="h-8 text-sm" min="0" />
-                                                </div>
+                                                {editRole === 'citizen' && (
+                                                    <div className="space-y-1">
+                                                        <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Points</label>
+                                                        <Input type="number" value={editPoints} onChange={(e) => setEditPoints(parseInt(e.target.value) || 0)} className="h-8 text-sm" min="0" />
+                                                    </div>
+                                                )}
                                             </div>
                                             <div className="space-y-1">
                                                 <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">New Password (Optional)</label>
@@ -281,12 +287,12 @@ export default function UsersPage() {
                                     )}
                                 </div>
                             </div>
-                        </div>
+                        </motion.div>
                     );
                 })}
 
-                {filteredUsers.length === 0 && (
-                    <div className="col-span-full flex flex-col items-center justify-center py-16 text-center border-2 border-dashed border-border/50 rounded-xl bg-card">
+                {filteredUsers.length === 0 && !isFetching && (
+                    <div className="col-span-full flex flex-col items-center justify-center py-16 text-center border-2 border-dashed border-border/40 rounded-xl bg-card/40 backdrop-blur-sm">
                         <div className="p-4 bg-muted/50 rounded-full mb-4">
                             <UserIcon className="h-8 w-8 text-muted-foreground/60" />
                         </div>

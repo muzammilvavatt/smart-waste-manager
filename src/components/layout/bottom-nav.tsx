@@ -23,6 +23,7 @@ export function BottomNav() {
     const collectorLinks = [
         { href: "/dashboard/collector", label: "Tasks", icon: Home },
         { href: "/dashboard/collector/map", label: "Map", icon: Upload }, // Using Upload icon for Map as placeholder or Map icon
+        { href: "/dashboard/collector/settings", label: "Settings", icon: Settings },
     ]
 
     const adminLinks = [

@@ -103,38 +103,39 @@
 
 .dark {
   /* Modern SaaS Dark Mode */
-  --background: 240 10% 3.9%;
-  /* Zinc 950 */
+  --background: 240 10% 4.5%;
+  /* Zinc 950 slightly raised */
   --foreground: 0 0% 98%;
   /* Zinc 50 */
 
-  --card: 240 10% 3.9%;
+  --card: 240 5% 6%;
+  /* Raised above background */
   --card-foreground: 0 0% 98%;
 
-  --popover: 240 10% 3.9%;
+  --popover: 240 5% 6%;
   --popover-foreground: 0 0% 98%;
 
   --primary: 158 64% 52%;
   /* Slightly brighter emerald for dark mode */
   --primary-foreground: 0 0% 98%;
 
-  --secondary: 240 3.7% 15.9%;
-  /* Zinc 800 */
+  --secondary: 240 4% 12%;
+  /* Zinc 800ish */
   --secondary-foreground: 0 0% 98%;
 
-  --muted: 240 3.7% 15.9%;
+  --muted: 240 4% 12%;
   --muted-foreground: 240 5% 64.9%;
   /* Zinc 400 */
 
-  --accent: 240 3.7% 15.9%;
+  --accent: 240 4% 12%;
   --accent-foreground: 0 0% 98%;
 
   --destructive: 0 62.8% 30.6%;
   /* Darker red */
   --destructive-foreground: 0 0% 98%;
 
-  --border: 240 3.7% 15.9%;
-  --input: 240 3.7% 15.9%;
+  --border: 240 4% 16%;
+  --input: 240 4% 16%;
   --ring: 158 64% 52%;
 }
 
@@ -162,11 +163,11 @@
 
 @layer utilities {
   .glass {
-    @apply bg-background/60 backdrop-blur-xl border border-white/10 shadow-sm dark:bg-zinc-950/60 dark:border-white/5;
+    @apply bg-background/70 backdrop-blur-xl border border-white/10 shadow-sm dark:bg-zinc-950/70 dark:border-white/5;
   }
 
   .glass-card {
-    @apply bg-white/70 dark:bg-zinc-900/50 backdrop-blur-lg border border-black/5 dark:border-white/10 shadow-lg hover:shadow-xl transition-all duration-300;
+    @apply bg-card/90 backdrop-blur-xl border border-border/50 shadow-sm hover:shadow-md transition-all duration-300 dark:border-white/5;
   }
 
   .text-gradient {
